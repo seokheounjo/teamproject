@@ -1,0 +1,13 @@
+<!doctype html><html><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<script src="https://unpkg.com/htmx.org@1.9.12"></script>
+<title>Dev Calendar</title>
+<style>body{font-family:system-ui;margin:1.5rem}</style>
+</head><body>
+  <h1>{{ project.name }}</h1>
+  <nav>
+    <a hx-get="/projects/{{project.id}}/kanban" hx-target="#main" hx-swap="innerHTML">칸반</a> |
+    <a hx-get="/projects/{{project.id}}/calendar" hx-target="#main" hx-swap="innerHTML">캘린더</a>
+  </nav>
+  <div id="main" hx-get="/projects/{{project.id}}/kanban" hx-trigger="load"></div>
+</body></html>

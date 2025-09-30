@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dev-calendar
+  namespace: app
+  labels:
+    app.kubernetes.io/name: dev-calendar
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: dev-calendar
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: dev-calendar
+    spec:
+      containers:
+        - name: app
+          # This image name key "app" is used by kustomize set image in CI
+          image: app:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+          env:
+            - name: PORT
+              value: "8080"
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
+

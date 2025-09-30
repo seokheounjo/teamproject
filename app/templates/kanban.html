@@ -1,0 +1,20 @@
+<div class="board" style="display:flex;gap:1rem">
+  {% for col in ["Backlog","Planned","InProgress","Review","Done"] %}
+  <div style="flex:1">
+    <h3>{{ col }}</h3>
+    <ul>
+      {% for t in tasks if t.status==col %}
+        <li>
+          {{ t.title }}
+          <select hx-post="/tasks/move/{{t.id}}" hx-include="this">
+            <option {{ 'selected' if t.status==col}}>{{col}}</option>
+            {% for opt in ["Backlog","Planned","InProgress","Review","Done","Blocked"] %}
+            <option>{{opt}}</option>
+            {% endfor %}
+          </select>
+        </li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endfor %}
+</div>

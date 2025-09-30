@@ -1,0 +1,11 @@
+<div>
+  <h3>캘린더 (작업 마감일)</h3>
+  <ul>
+    {% for t in tasks if t.due_date %}
+      <li>{{ t.due_date }} - [{{ t.status }}] {{ t.title }}</li>
+    {% endfor %}
+  </ul>
+  <p>
+    ICS 구독: <code>/calendar/{{project.id}}.ics?token=YOUR_TOKEN</code>
+  </p>
+</div>

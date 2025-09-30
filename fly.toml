@@ -1,0 +1,10 @@
+app = "dev-calendar-yourname"
+primary_region = "nrt"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[http_service]
+  internal_port = 8080
+  auto_start_machines = true
+  min_machines_running = 1
