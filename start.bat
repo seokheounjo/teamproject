@@ -154,35 +154,56 @@ REM 9. 웹 브라우저 자동 실행
 REM ============================================================
 echo.
 echo [🌐] 웹 브라우저 실행 중...
-start http://localhost:8081/projects/
-timeout /t 2 /nobreak >nul
 
 REM ArgoCD 비밀번호 가져오기
+echo    → ArgoCD 관리자 비밀번호 조회 중...
 for /f "tokens=*" %%i in ('kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath^="{.data.password}" 2^>nul ^| powershell -Command "$input | ForEach-Object { [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($_)) }"') do set ARGOCD_PASSWORD=%%i
+
+REM Dev Calendar 열기
+echo    → Dev Calendar 열기...
+start http://localhost:8081/projects/
+timeout /t 1 /nobreak >nul
+
+REM ArgoCD 웹 UI 열기
+echo    → ArgoCD 웹 UI 열기...
+start https://localhost:8080
+timeout /t 1 /nobreak >nul
+
+REM Jenkins가 있으면 열기
+kubectl get svc -n jenkins jenkins >nul 2>&1
+if not errorlevel 1 (
+    echo    → Jenkins 웹 UI 열기...
+    start http://localhost:8090
+)
 
 echo.
 echo ╔═══════════════════════════════════════════════════════════════╗
 echo ║                    ✅ 모든 서비스 실행 완료!                 ║
 echo ╚═══════════════════════════════════════════════════════════════╝
 echo.
-echo 📋 접속 정보:
+echo 📋 접속 정보 (모든 브라우저가 자동으로 열렸습니다):
 echo ┌───────────────────────────────────────────────────────────────┐
 echo │ 🎯 Dev Calendar    http://localhost:8081/projects/            │
+echo │                                                               │
 echo │ 🔐 ArgoCD          https://localhost:8080                     │
 if defined ARGOCD_PASSWORD (
     echo │   - ID: admin                                                 │
     echo │   - PW: %ARGOCD_PASSWORD%                                     │
+    echo │   ※ Applications 메뉴에서 배포 상태를 확인하세요!            │
 ) else (
     echo │   - 비밀번호를 가져올 수 없습니다. ArgoCD 설치를 확인하세요.  │
 )
+kubectl get svc -n jenkins jenkins >nul 2>&1
 if not errorlevel 1 (
+    echo │                                                               │
     echo │ 🛠️  Jenkins         http://localhost:8090                     │
 )
 echo └───────────────────────────────────────────────────────────────┘
 echo.
 echo 💡 사용 팁:
-echo    - Dev Calendar는 자동으로 열렸습니다!
-echo    - ArgoCD는 HTTPS이므로 보안 경고가 나올 수 있습니다
+echo    - Dev Calendar, ArgoCD, Jenkins 웹 UI가 자동으로 열렸습니다!
+echo    - ArgoCD는 HTTPS이므로 보안 경고 나오면 "고급 → 계속 진행" 클릭
+echo    - ArgoCD에서 dev-dev-calendar와 prod-prod-calendar 앱 상태 확인 가능
 echo    - 이 창을 닫으면 모든 포트포워딩이 종료됩니다
 echo.
 echo 🛑 종료하려면 아무 키나 누르세요
