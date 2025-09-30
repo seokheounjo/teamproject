@@ -225,7 +225,12 @@
                         <span class="status-badge status-{{ project.status.value.lower() }}">
                             {{ project.status.value }}
                         </span>
-                        <span>📅 {{ project.created_at.strftime('%Y-%m-%d') }}</span>
+                        {% if project.started_at %}
+                        <span>📅 시작: {{ project.started_at.strftime('%Y-%m-%d') }}</span>
+                        {% endif %}
+                        {% if project.completed_at %}
+                        <span>🏁 완료: {{ project.completed_at.strftime('%Y-%m-%d') }}</span>
+                        {% endif %}
                     </div>
                 </a>
                 {% endfor %}
@@ -253,9 +258,17 @@
                     <textarea id="description" name="description" placeholder="프로젝트에 대한 간단한 설명을 입력하세요"></textarea>
                 </div>
                 <div class="form-group">
+                    <label for="start_date">시작일</label>
+                    <input type="date" id="start_date" name="start_date">
+                </div>
+                <div class="form-group">
+                    <label for="end_date">목표 완료일</label>
+                    <input type="date" id="end_date" name="end_date">
+                </div>
+                <div class="form-group">
                     <label for="status">상태</label>
                     <select id="status" name="status">
-                        <option value="Active">진행 중</option>
+                        <option value="Active" selected>진행 중</option>
                         <option value="Archived">보관됨</option>
                         <option value="Completed">완료됨</option>
                     </select>
