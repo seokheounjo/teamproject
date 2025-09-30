@@ -28,19 +28,29 @@ REM ============================================================
 REM 2. 가상환경 활성화 및 의존성 설치
 REM ============================================================
 echo [📚] 의존성 패키지 확인 중...
-call venv\Scripts\activate.bat
-if errorlevel 1 (
-    echo ❌ 가상환경 활성화 실패!
+
+REM 가상환경 Python 경로 설정
+set VENV_PYTHON=%CD%\venv\Scripts\python.exe
+set VENV_PIP=%CD%\venv\Scripts\pip.exe
+
+if not exist "%VENV_PYTHON%" (
+    echo ❌ 가상환경 Python을 찾을 수 없습니다!
     pause
     exit /b 1
 )
 
+echo    → 가상환경 활성화 완료!
+
 REM requirements.txt가 있으면 pip install 실행
 if exist "requirements.txt" (
     echo    → 필요한 패키지를 설치합니다...
-    pip install -q --upgrade pip
-    pip install -q -r requirements.txt
-    echo    ✅ 패키지 설치 완료!
+    "%VENV_PIP%" install -q --upgrade pip 2>nul
+    "%VENV_PIP%" install -q -r requirements.txt
+    if errorlevel 1 (
+        echo    ⚠️  일부 패키지 설치에 실패했을 수 있습니다.
+    ) else (
+        echo    ✅ 패키지 설치 완료!
+    )
 ) else (
     echo    ⚠️  requirements.txt 파일을 찾을 수 없습니다.
 )
@@ -220,9 +230,10 @@ REM 포트포워딩 프로세스 종료
 echo    → 포트포워딩 종료 중...
 taskkill /F /IM kubectl.exe >nul 2>&1
 
-REM 가상환경 비활성화
-echo    → 가상환경 종료 중...
-call venv\Scripts\deactivate.bat >nul 2>&1
+REM 가상환경은 별도 프로세스로 실행되지 않으므로 종료 불필요
+echo    → 환경 변수 정리 중...
+set VENV_PYTHON=
+set VENV_PIP=
 
 REM 선택: Minikube 종료 (나중에 지속 서비스시 주석 처리하면 됨)
 REM echo    → Minikube 종료 중...
