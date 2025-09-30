@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import RedirectResponse
 from app.api import auth, projects, tasks, comments, advice, calendar, ws
 
 # Ensure models are imported so metadata includes all tables
@@ -33,7 +34,8 @@ app.include_router(ws.router)
 
 @app.get("/")
 def root():
-	return {"ok": True, "service": "dev-calendar"}
+	# Redirect to project 1 (default project)
+	return RedirectResponse(url="/projects/1")
 
 @app.get("/healthz")
 def healthz():
