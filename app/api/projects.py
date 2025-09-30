@@ -38,7 +38,53 @@ def kanban(request: Request, project_id: int, db: Session = Depends(get_db)):
 	"""칸반 보드"""
 	project = db.query(Project).filter(Project.id == project_id).first()
 	tasks = db.query(Task).filter(Task.project_id == project_id).all()
-	return templates.TemplateResponse("kanban_improved.html", {"request": request, "project": project, "tasks": tasks})
+	return templates.TemplateResponse("kanban_v2.html", {"request": request, "project": project, "tasks": tasks})
+
+@router.get("/{project_id}/dashboard")
+def dashboard(request: Request, project_id: int, db: Session = Depends(get_db)):
+	"""프로젝트 대시보드"""
+	project = db.query(Project).filter(Project.id == project_id).first()
+	tasks = db.query(Task).filter(Task.project_id == project_id).all()
+
+	# 통계 계산
+	total = len(tasks)
+	completed = len([t for t in tasks if t.status == "Done"])
+	in_progress = len([t for t in tasks if t.status == "InProgress"])
+	completion_rate = round((completed / total * 100) if total > 0 else 0, 1)
+
+	# 상태별 분포
+	status_counts = {}
+	for task in tasks:
+		status_counts[task.status] = status_counts.get(task.status, 0) + 1
+
+	status_labels = list(status_counts.keys())
+	status_data = list(status_counts.values())
+
+	# 우선순위별 분포
+	priority_counts = [0, 0, 0]  # [높음, 중간, 낮음]
+	for task in tasks:
+		if task.priority == 1:
+			priority_counts[0] += 1
+		elif task.priority == 2:
+			priority_counts[1] += 1
+		else:
+			priority_counts[2] += 1
+
+	stats = {
+		"total": total,
+		"completed": completed,
+		"in_progress": in_progress,
+		"completion_rate": completion_rate
+	}
+
+	return templates.TemplateResponse("dashboard.html", {
+		"request": request,
+		"project": project,
+		"stats": stats,
+		"status_labels": status_labels,
+		"status_data": status_data,
+		"priority_data": priority_counts
+	})
 
 @router.get("/{project_id}/calendar")
 def calendar_view(request: Request, project_id: int, db: Session = Depends(get_db)):

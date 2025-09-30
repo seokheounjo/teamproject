@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ project.name }} - 칸반 보드</title>
+    <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f4f5f7;
+            color: #172b4d;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* 사이드바 */
+        .sidebar {
+            width: 250px;
+            background: #0747a6;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 2px 0 4px rgba(0,0,0,0.1);
+        }
+        .sidebar-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .sidebar-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+        .sidebar-subtitle {
+            font-size: 0.75rem;
+            opacity: 0.8;
+        }
+        .sidebar-menu {
+            flex: 1;
+            padding: 1rem 0;
+        }
+        .menu-item {
+            padding: 0.75rem 1.5rem;
+            color: rgba(255,255,255,0.9);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            transition: background 0.2s;
+        }
+        .menu-item:hover {
+            background: rgba(255,255,255,0.1);
+        }
+        .menu-item.active {
+            background: rgba(255,255,255,0.2);
+            font-weight: 600;
+        }
+
+        /* 메인 컨텐츠 */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .header {
+            background: white;
+            border-bottom: 2px solid #dfe1e6;
+            padding: 1rem 2rem;
+        }
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+            color: #5e6c84;
+        }
+        .breadcrumb a {
+            color: #5e6c84;
+            text-decoration: none;
+        }
+        .breadcrumb a:hover {
+            color: #0052cc;
+        }
+        .project-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #172b4d;
+            margin-top: 0.5rem;
+        }
+        .nav-tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+        .nav-tab {
+            padding: 0.5rem 1rem;
+            border: none;
+            background: none;
+            color: #5e6c84;
+            font-weight: 500;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            text-decoration: none;
+        }
+        .nav-tab.active {
+            color: #0052cc;
+            border-bottom-color: #0052cc;
+        }
+        .header-actions {
+            display: flex;
+            gap: 0.75rem;
+        }
+        .btn {
+            background: #0052cc;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 0.875rem;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .btn:hover {
+            background: #0747a6;
+        }
+        .btn-secondary {
+            background: #f4f5f7;
+            color: #42526e;
+        }
+        .btn-secondary:hover {
+            background: #ebecf0;
+        }
+
+        /* 칸반 보드 */
+        .board-container {
+            flex: 1;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        .board-filters {
+            padding: 1rem 2rem;
+            background: white;
+            border-bottom: 1px solid #dfe1e6;
+            display: flex;
+            gap: 1rem;
+        }
+        .filter-input {
+            padding: 0.5rem;
+            border: 2px solid #dfe1e6;
+            border-radius: 3px;
+            font-size: 0.875rem;
+        }
+        .filter-input:focus {
+            outline: none;
+            border-color: #0052cc;
+        }
+        .board {
+            flex: 1;
+            display: flex;
+            gap: 1rem;
+            overflow-x: auto;
+            padding: 1.5rem 2rem;
+        }
+        .column {
+            flex: 0 0 300px;
+            background: #f4f5f7;
+            border-radius: 3px;
+            display: flex;
+            flex-direction: column;
+            max-height: 100%;
+        }
+        .column-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem;
+            background: #ebecf0;
+            border-radius: 3px 3px 0 0;
+        }
+        .column-title {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: #5e6c84;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .task-count {
+            background: #dfe1e6;
+            color: #5e6c84;
+            padding: 0.125rem 0.5rem;
+            border-radius: 10px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .task-list {
+            flex: 1;
+            padding: 0.75rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            overflow-y: auto;
+            min-height: 100px;
+        }
+        .task-card {
+            background: white;
+            border-radius: 3px;
+            padding: 0.75rem;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+            cursor: pointer;
+            transition: box-shadow 0.2s, transform 0.2s;
+        }
+        .task-card:hover {
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+            transform: translateY(-2px);
+        }
+        .task-card.dragging {
+            opacity: 0.5;
+        }
+        .task-title {
+            font-size: 0.875rem;
+            color: #172b4d;
+            margin-bottom: 0.5rem;
+            line-height: 1.4;
+        }
+        .task-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.75rem;
+            color: #5e6c84;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+        .task-id {
+            font-weight: 600;
+        }
+        .priority-badge {
+            padding: 0.125rem 0.375rem;
+            border-radius: 3px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .priority-1 { background: #ffebe6; color: #bf2600; }
+        .priority-2 { background: #fff0b3; color: #ff8b00; }
+        .priority-3 { background: #e3fcef; color: #006644; }
+        .task-tags {
+            display: flex;
+            gap: 0.25rem;
+            flex-wrap: wrap;
+        }
+        .tag {
+            background: #dfe1e6;
+            color: #42526e;
+            padding: 0.125rem 0.375rem;
+            border-radius: 3px;
+            font-size: 0.7rem;
+        }
+        .add-task-btn {
+            width: calc(100% - 1.5rem);
+            margin: 0 0.75rem 0.75rem;
+            background: transparent;
+            border: 2px dashed #dfe1e6;
+            color: #5e6c84;
+            padding: 0.5rem;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 0.875rem;
+        }
+        .add-task-btn:hover {
+            background: #f4f5f7;
+            border-color: #0052cc;
+            color: #0052cc;
+        }
+
+        /* 모달 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(9, 30, 66, 0.54);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal.active {
+            display: flex;
+        }
+        .modal-content {
+            background: white;
+            border-radius: 3px;
+            padding: 2rem;
+            width: 90%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+        }
+        .modal-content.large {
+            max-width: 800px;
+        }
+        .modal-header {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #5e6c84;
+        }
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            font-size: 0.875rem;
+            color: #172b4d;
+        }
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 0.5rem;
+            border: 2px solid #dfe1e6;
+            border-radius: 3px;
+            font-size: 0.875rem;
+            font-family: inherit;
+        }
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #0052cc;
+        }
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+        .modal-actions {
+            display: flex;
+            gap: 0.75rem;
+            justify-content: flex-end;
+            margin-top: 1.5rem;
+        }
+
+        /* 태스크 상세 모달 */
+        .task-detail-header {
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        .task-detail-id {
+            color: #5e6c84;
+            font-size: 0.875rem;
+        }
+        .task-detail-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            flex: 1;
+        }
+        .task-section {
+            margin-bottom: 1.5rem;
+        }
+        .task-section-title {
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            color: #172b4d;
+        }
+        .comment-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+        .comment {
+            background: #f4f5f7;
+            padding: 0.75rem;
+            border-radius: 3px;
+        }
+        .comment-meta {
+            font-size: 0.75rem;
+            color: #5e6c84;
+            margin-bottom: 0.5rem;
+        }
+        .comment-body {
+            font-size: 0.875rem;
+            line-height: 1.4;
+        }
+    </style>
+</head>
+<body>
+    <!-- 사이드바 -->
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-title">📋 Dev Calendar</div>
+            <div class="sidebar-subtitle">프로젝트 관리</div>
+        </div>
+        <div class="sidebar-menu">
+            <a href="/projects" class="menu-item">
+                📊 내 프로젝트
+            </a>
+            <a href="/projects/{{ project.id }}/dashboard" class="menu-item">
+                📈 대시보드
+            </a>
+            <a href="/projects/{{ project.id }}/kanban" class="menu-item active">
+                📋 칸반 보드
+            </a>
+            <a href="/projects/{{ project.id }}/calendar" class="menu-item">
+                📅 캘린더
+            </a>
+            <a href="/projects/{{ project.id }}/backlog" class="menu-item">
+                📝 백로그
+            </a>
+        </div>
+    </div>
+
+    <!-- 메인 컨텐츠 -->
+    <div class="main-content">
+        <div class="header">
+            <div class="header-content">
+                <div>
+                    <div class="breadcrumb">
+                        <a href="/projects">프로젝트</a>
+                        <span>/</span>
+                        <span>{{ project.name }}</span>
+                    </div>
+                    <h1 class="project-title">{{ project.name }}</h1>
+                </div>
+                <div class="header-actions">
+                    <button class="btn btn-secondary" onclick="alert('필터 기능 개발 예정')">🔍 필터</button>
+                    <button class="btn" onclick="openCreateTaskModal()">+ 새 태스크</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="board-container">
+            <div class="board-filters">
+                <input type="text" class="filter-input" placeholder="태스크 검색..." id="searchInput">
+                <select class="filter-input">
+                    <option>모든 우선순위</option>
+                    <option>높음</option>
+                    <option>중간</option>
+                    <option>낮음</option>
+                </select>
+            </div>
+
+            <div class="board">
+                {% set columns = [
+                    ("Backlog", "📋 백로그"),
+                    ("TODO", "📝 할 일"),
+                    ("InProgress", "⚙️ 진행중"),
+                    ("CodeReview", "👀 코드리뷰"),
+                    ("Testing", "🧪 테스팅"),
+                    ("Done", "✅ 완료")
+                ] %}
+
+                {% for col_id, col_name in columns %}
+                <div class="column">
+                    <div class="column-header">
+                        <span class="column-title">{{ col_name }}</span>
+                        <span class="task-count">{{ tasks|selectattr('status', 'equalto', col_id)|list|length }}</span>
+                    </div>
+                    <div class="task-list" id="column-{{ col_id }}" data-status="{{ col_id }}">
+                        {% for task in tasks if task.status == col_id %}
+                        <div class="task-card" data-task-id="{{ task.id }}" onclick="openTaskDetail({{ task.id }})">
+                            <div class="task-title">{{ task.title }}</div>
+                            <div class="task-meta">
+                                <span class="task-id">TASK-{{ task.id }}</span>
+                                {% if task.priority %}
+                                <span class="priority-badge priority-{{ task.priority }}">
+                                    {% if task.priority == 1 %}높음
+                                    {% elif task.priority == 2 %}중간
+                                    {% else %}낮음{% endif %}
+                                </span>
+                                {% endif %}
+                            </div>
+                            {% if task.tags %}
+                            <div class="task-tags">
+                                {% for tag in task.tags.split(',') %}
+                                <span class="tag">{{ tag.strip() }}</span>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <button class="add-task-btn" onclick="openCreateTaskModal('{{ col_id }}')">+ 태스크 추가</button>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- 태스크 생성 모달 -->
+    <div id="createTaskModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                새 태스크 만들기
+                <button class="close-btn" onclick="closeCreateTaskModal()">&times;</button>
+            </div>
+            <form hx-post="/api/tasks/create" hx-on::after-request="if(event.detail.successful) closeCreateTaskModal(); window.location.reload();">
+                <input type="hidden" name="project_id" value="{{ project.id }}">
+                <input type="hidden" name="status" id="taskStatus" value="Backlog">
+
+                <div class="form-group">
+                    <label for="title">제목 *</label>
+                    <input type="text" id="title" name="title" required placeholder="태스크 제목을 입력하세요">
+                </div>
+                <div class="form-group">
+                    <label for="description">설명</label>
+                    <textarea id="description" name="description" placeholder="태스크에 대한 상세 설명"></textarea>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="priority">우선순위</label>
+                        <select id="priority" name="priority">
+                            <option value="3">낮음</option>
+                            <option value="2" selected>중간</option>
+                            <option value="1">높음</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="story_points">스토리 포인트</label>
+                        <input type="number" id="story_points" name="story_points" min="1" max="21">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="start_date">시작일</label>
+                        <input type="date" id="start_date" name="start_date">
+                    </div>
+                    <div class="form-group">
+                        <label for="due_date">마감일</label>
+                        <input type="date" id="due_date" name="due_date">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="tags">태그 (쉼표로 구분)</label>
+                    <input type="text" id="tags" name="tags" placeholder="예: frontend, bug, urgent">
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeCreateTaskModal()">취소</button>
+                    <button type="submit" class="btn">만들기</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 태스크 상세 모달 -->
+    <div id="taskDetailModal" class="modal">
+        <div class="modal-content large">
+            <div class="modal-header">
+                태스크 상세
+                <button class="close-btn" onclick="closeTaskDetailModal()">&times;</button>
+            </div>
+            <div id="taskDetailContent">
+                <!-- JavaScript로 동적 로드 -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 드래그 앤 드롭 초기화
+        document.querySelectorAll('.task-list').forEach(list => {
+            new Sortable(list, {
+                group: 'tasks',
+                animation: 150,
+                ghostClass: 'dragging',
+                onEnd: function(evt) {
+                    const taskId = evt.item.dataset.taskId;
+                    const newStatus = evt.to.dataset.status;
+
+                    // API 호출하여 상태 업데이트
+                    fetch(`/api/tasks/${taskId}/move`, {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                        body: `status=${newStatus}`
+                    });
+                }
+            });
+        });
+
+        // 태스크 생성 모달
+        function openCreateTaskModal(status = 'Backlog') {
+            document.getElementById('taskStatus').value = status;
+            document.getElementById('createTaskModal').classList.add('active');
+        }
+
+        function closeCreateTaskModal() {
+            document.getElementById('createTaskModal').classList.remove('active');
+            document.querySelector('#createTaskModal form').reset();
+        }
+
+        // 태스크 상세 모달
+        async function openTaskDetail(taskId) {
+            const modal = document.getElementById('taskDetailModal');
+            const content = document.getElementById('taskDetailContent');
+
+            // 태스크 정보 로드
+            const response = await fetch(`/api/tasks/${taskId}`);
+            const task = await response.json();
+
+            content.innerHTML = `
+                <div class="task-detail-header">
+                    <div>
+                        <div class="task-detail-id">TASK-${task.id}</div>
+                        <h2 class="task-detail-title">${task.title}</h2>
+                    </div>
+                </div>
+
+                <div class="task-section">
+                    <div class="task-section-title">설명</div>
+                    <div>${task.description || '설명이 없습니다.'}</div>
+                </div>
+
+                <div class="task-section">
+                    <div class="task-section-title">세부 정보</div>
+                    <div><strong>상태:</strong> ${task.status}</div>
+                    <div><strong>우선순위:</strong> ${task.priority == 1 ? '높음' : task.priority == 2 ? '중간' : '낮음'}</div>
+                    ${task.start_date ? `<div><strong>시작일:</strong> ${task.start_date}</div>` : ''}
+                    ${task.due_date ? `<div><strong>마감일:</strong> ${task.due_date}</div>` : ''}
+                    ${task.story_points ? `<div><strong>스토리 포인트:</strong> ${task.story_points}</div>` : ''}
+                    ${task.tags ? `<div><strong>태그:</strong> ${task.tags}</div>` : ''}
+                </div>
+
+                <div class="task-section">
+                    <div class="task-section-title">댓글</div>
+                    <div class="comment-list">
+                        ${task.comments.map(c => `
+                            <div class="comment">
+                                <div class="comment-meta">${c.created_at}</div>
+                                <div class="comment-body">${c.body}</div>
+                            </div>
+                        `).join('') || '<div>댓글이 없습니다.</div>'}
+                    </div>
+                    <form hx-post="/api/tasks/${taskId}/comment" hx-on::after-request="openTaskDetail(${taskId})">
+                        <div class="form-group">
+                            <textarea name="body" placeholder="댓글 작성..." required></textarea>
+                        </div>
+                        <button type="submit" class="btn">댓글 추가</button>
+                    </form>
+                </div>
+            `;
+
+            modal.classList.add('active');
+        }
+
+        function closeTaskDetailModal() {
+            document.getElementById('taskDetailModal').classList.remove('active');
+        }
+
+        // 모달 외부 클릭 시 닫기
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.addEventListener('click', function(e) {
+                if (e.target === this) {
+                    this.classList.remove('active');
+                }
+            });
+        });
+
+        // 검색 기능
+        document.getElementById('searchInput').addEventListener('input', function(e) {
+            const searchTerm = e.target.value.toLowerCase();
+            document.querySelectorAll('.task-card').forEach(card => {
+                const title = card.querySelector('.task-title').textContent.toLowerCase();
+                card.style.display = title.includes(searchTerm) ? 'block' : 'none';
+            });
+        });
+    </script>
+</body>
+</html>

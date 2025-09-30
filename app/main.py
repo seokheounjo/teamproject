@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import RedirectResponse
-from app.api import auth, projects, tasks, comments, advice, calendar, ws, api_projects
+from app.api import auth, projects, tasks, comments, advice, calendar, ws, api_projects, api_tasks
 
 # Ensure models are imported so metadata includes all tables
 from app.models import user as _user  # noqa: F401
@@ -27,6 +27,7 @@ def _create_tables_if_needed():
 app.include_router(auth.router, prefix="/auth", tags=["auth"])
 app.include_router(projects.router, prefix="/projects", tags=["projects"])
 app.include_router(api_projects.router, prefix="/api/projects", tags=["api-projects"])
+app.include_router(api_tasks.router, prefix="/api/tasks", tags=["api-tasks"])
 app.include_router(tasks.router, prefix="/tasks", tags=["tasks"])
 app.include_router(comments.router, prefix="/comments", tags=["comments"])
 app.include_router(advice.router, prefix="/advice", tags=["advice"])
