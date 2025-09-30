@@ -52,7 +52,7 @@ pipeline {
             git config user.email "jenkins@local"
             git add -A
             git commit -m "chore(ci): bump image to ${SHA}" || echo "No changes"
-            git push https://${GIT_TOKEN}@github.com/${GITHUB_OWNER}/kub.git HEAD:main
+            git push https://${GIT_TOKEN}@github.com/${GITHUB_OWNER}/teamproject.git HEAD:master
           """
         }
       }

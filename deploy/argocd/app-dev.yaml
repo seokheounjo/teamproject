@@ -6,7 +6,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/seokheounjo/kub.git
+    repoURL: https://github.com/seokheounjo/teamproject.git
     targetRevision: master
     path: deploy/k8s/overlays/dev
   destination:
