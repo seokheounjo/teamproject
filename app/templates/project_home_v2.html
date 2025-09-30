@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ project.name }} - Dev Calendar</title>
+    <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0f0f1e;
+            color: #fff;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* 애니메이션 배경 */
+        .animated-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            opacity: 0.9;
+        }
+        .animated-bg::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url('data:image/svg+xml,<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg"><circle cx="50" cy="50" r="2" fill="rgba(255,255,255,0.1)"/></svg>');
+            animation: bgMove 20s linear infinite;
+        }
+        @keyframes bgMove {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(100px, 100px); }
+        }
+
+        /* 메인 컨테이너 */
+        .container {
+            position: relative;
+            z-index: 1;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* 헤더 */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 3rem;
+            animation: fadeInDown 0.6s ease;
+        }
+        .back-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            background: rgba(255,255,255,0.1);
+            border: 2px solid rgba(255,255,255,0.2);
+            border-radius: 12px;
+            color: white;
+            text-decoration: none;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s;
+        }
+        .back-btn:hover {
+            background: rgba(255,255,255,0.2);
+            transform: translateX(-5px);
+        }
+        .header-actions {
+            display: flex;
+            gap: 1rem;
+        }
+        .header-btn {
+            padding: 0.75rem 1.5rem;
+            background: rgba(255,255,255,0.9);
+            color: #667eea;
+            border: none;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .header-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+        }
+
+        /* 메인 그리드 */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        /* 프로젝트 카드 */
+        .project-hero {
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(20px);
+            border: 2px solid rgba(255,255,255,0.2);
+            border-radius: 24px;
+            padding: 3rem;
+            animation: fadeInUp 0.6s ease;
+        }
+        .project-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            animation: bounce 2s infinite;
+        }
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        .project-name {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, #fff 0%, #f0f0f0 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .project-description {
+            font-size: 1.25rem;
+            color: rgba(255,255,255,0.8);
+            line-height: 1.6;
+            margin-bottom: 2rem;
+        }
+        .project-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+        }
+        .stat-item {
+            text-align: center;
+            padding: 1rem;
+            background: rgba(255,255,255,0.1);
+            border-radius: 12px;
+            transition: all 0.3s;
+        }
+        .stat-item:hover {
+            background: rgba(255,255,255,0.2);
+            transform: translateY(-5px);
+        }
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #fff;
+        }
+        .stat-label {
+            font-size: 0.875rem;
+            color: rgba(255,255,255,0.7);
+            margin-top: 0.5rem;
+        }
+
+        /* 광고 배너 1 (상단 우측) */
+        .ad-banner-top {
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(20px);
+            border: 2px solid rgba(255,255,255,0.2);
+            border-radius: 24px;
+            padding: 2rem;
+            animation: fadeInRight 0.6s ease;
+            height: fit-content;
+            position: relative;
+            overflow: hidden;
+        }
+        .ad-badge {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: rgba(255,255,255,0.2);
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .ad-content {
+            text-align: center;
+        }
+        .ad-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+        .ad-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+        .ad-description {
+            color: rgba(255,255,255,0.8);
+            font-size: 0.95rem;
+            line-height: 1.5;
+            margin-bottom: 1.5rem;
+        }
+        .ad-btn {
+            display: inline-block;
+            padding: 0.75rem 2rem;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 25px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        .ad-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+        }
+
+        /* 빠른 액션 그리드 */
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        .action-card {
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(20px);
+            border: 2px solid rgba(255,255,255,0.2);
+            border-radius: 20px;
+            padding: 2rem;
+            text-decoration: none;
+            color: white;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+            animation: fadeInUp 0.6s ease;
+        }
+        .action-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, transparent 100%);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .action-card:hover::before {
+            opacity: 1;
+        }
+        .action-card:hover {
+            transform: translateY(-10px) scale(1.05);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            border-color: rgba(255,255,255,0.4);
+        }
+        .action-card:nth-child(1) { animation-delay: 0.1s; }
+        .action-card:nth-child(2) { animation-delay: 0.2s; }
+        .action-card:nth-child(3) { animation-delay: 0.3s; }
+        .action-card:nth-child(4) { animation-delay: 0.4s; }
+        .action-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            display: block;
+        }
+        .action-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+        .action-desc {
+            font-size: 0.875rem;
+            color: rgba(255,255,255,0.7);
+        }
+
+        /* 광고 배너 2 (하단 전체) */
+        .ad-banner-bottom {
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(20px);
+            border: 2px solid rgba(255,255,255,0.2);
+            border-radius: 24px;
+            padding: 3rem;
+            animation: fadeInUp 0.6s ease 0.5s both;
+            position: relative;
+            overflow: hidden;
+        }
+        .ad-banner-bottom::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: rotate 20s linear infinite;
+        }
+        @keyframes rotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .ad-banner-bottom .ad-content {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 2rem;
+        }
+        .ad-banner-bottom .ad-text {
+            flex: 1;
+        }
+        .ad-banner-bottom .ad-icon {
+            font-size: 5rem;
+        }
+
+        /* 애니메이션 */
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        @keyframes fadeInRight {
+            from {
+                opacity: 0;
+                transform: translateX(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        /* 광고 페이드 효과 */
+        .ad-content {
+            transition: opacity 0.5s ease-in-out;
+        }
+        .ad-content.fade-out {
+            opacity: 0;
+        }
+
+        /* 반응형 */
+        @media (max-width: 1200px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+            .quick-actions {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        @media (max-width: 768px) {
+            .quick-actions {
+                grid-template-columns: 1fr;
+            }
+            .project-name {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="animated-bg"></div>
+
+    <div class="container">
+        <!-- 헤더 -->
+        <div class="header">
+            <a href="/projects" class="back-btn">
+                ← 프로젝트 목록
+            </a>
+            <div class="header-actions">
+                <button class="header-btn" onclick="location.href='/projects/{{ project.id }}/dashboard'">📊 통계 보기</button>
+                <button class="header-btn" onclick="location.href='/projects/{{ project.id }}/kanban'">시작하기 →</button>
+            </div>
+        </div>
+
+        <!-- 메인 그리드 -->
+        <div class="main-grid">
+            <!-- 프로젝트 히어로 -->
+            <div class="project-hero">
+                <div class="project-icon">🚀</div>
+                <h1 class="project-name">{{ project.name }}</h1>
+                <p class="project-description">
+                    {{ project.description or '혁신적인 프로젝트를 함께 만들어가요!' }}
+                </p>
+                <div class="project-stats">
+                    <div class="stat-item">
+                        <div class="stat-value">{{ project.status.value }}</div>
+                        <div class="stat-label">프로젝트 상태</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">
+                            {% if project.started_at %}
+                            {{ project.started_at.strftime('%m/%d') }}
+                            {% else %}
+                            --
+                            {% endif %}
+                        </div>
+                        <div class="stat-label">시작일</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">{{ project.created_at.strftime('%m/%d') }}</div>
+                        <div class="stat-label">생성일</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 광고 배너 1 (상단 우측) -->
+            <div class="ad-banner-top" id="adBannerTop">
+                <span class="ad-badge">SPONSORED</span>
+                <div class="ad-content" id="adContentTop">
+                    <!-- JavaScript로 동적 로드 -->
+                </div>
+            </div>
+        </div>
+
+        <!-- 빠른 액션 -->
+        <div class="quick-actions">
+            <a href="/projects/{{ project.id }}/dashboard" class="action-card">
+                <span class="action-icon">📈</span>
+                <div class="action-title">대시보드</div>
+                <div class="action-desc">프로젝트 현황을 한눈에</div>
+            </a>
+
+            <a href="/projects/{{ project.id }}/kanban" class="action-card">
+                <span class="action-icon">📋</span>
+                <div class="action-title">칸반 보드</div>
+                <div class="action-desc">태스크를 효율적으로</div>
+            </a>
+
+            <a href="/projects/{{ project.id }}/calendar" class="action-card">
+                <span class="action-icon">📅</span>
+                <div class="action-title">캘린더</div>
+                <div class="action-desc">일정을 체계적으로</div>
+            </a>
+
+            <a href="/projects/{{ project.id }}/backlog" class="action-card">
+                <span class="action-icon">📝</span>
+                <div class="action-title">백로그</div>
+                <div class="action-desc">아이디어를 관리하세요</div>
+            </a>
+        </div>
+
+        <!-- 광고 배너 2 (하단 전체) -->
+        <div class="ad-banner-bottom" id="adBannerBottom">
+            <div class="ad-content" id="adContentBottom">
+                <!-- JavaScript로 동적 로드 -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 광고 데이터
+        const adsTop = [
+            {
+                icon: '🎯',
+                title: '프로 플랜 업그레이드',
+                description: '무제한 프로젝트와 고급 기능을 사용하세요. 첫 달 50% 할인!',
+                btnText: '자세히 보기',
+                btnLink: '#'
+            },
+            {
+                icon: '🔔',
+                title: '실시간 알림 기능',
+                description: '팀원들과 즉시 소통하세요. 새로운 알림 기능을 체험해보세요.',
+                btnText: '지금 사용하기',
+                btnLink: '#'
+            },
+            {
+                icon: '🎓',
+                title: '무료 온라인 강의',
+                description: '프로젝트 관리 마스터 되기! 7일 무료 트레이닝 코스 제공.',
+                btnText: '등록하기',
+                btnLink: '#'
+            }
+        ];
+
+        const adsBottom = [
+            {
+                icon: '🚀',
+                title: 'Dev Calendar Premium - 팀 협업의 새로운 기준',
+                description: '대규모 팀을 위한 강력한 기능. 무제한 멤버, 고급 분석, 우선 지원을 경험하세요.',
+                btnText: '14일 무료 체험',
+                btnLink: '#'
+            },
+            {
+                icon: '💡',
+                title: 'AI 기반 스마트 추천 - 생산성 200% 향상',
+                description: '인공지능이 당신의 프로젝트를 분석하고 최적의 작업 순서를 제안합니다.',
+                btnText: '지금 시작하기',
+                btnLink: '#'
+            },
+            {
+                icon: '🎨',
+                title: '커스텀 테마 & 브랜딩 - 나만의 작업 공간',
+                description: '회사 브랜드에 맞춘 완벽한 커스터마이징. 화이트라벨 솔루션 지원.',
+                btnText: '상담 신청',
+                btnLink: '#'
+            }
+        ];
+
+        let currentAdTopIndex = 0;
+        let currentAdBottomIndex = 0;
+
+        // 상단 광고 렌더링
+        function renderAdTop(index) {
+            const ad = adsTop[index];
+            const content = document.getElementById('adContentTop');
+
+            content.classList.add('fade-out');
+
+            setTimeout(() => {
+                content.innerHTML = `
+                    <div class="ad-icon">${ad.icon}</div>
+                    <div class="ad-title">${ad.title}</div>
+                    <div class="ad-description">${ad.description}</div>
+                    <a href="${ad.btnLink}" class="ad-btn">${ad.btnText}</a>
+                `;
+                content.classList.remove('fade-out');
+            }, 500);
+        }
+
+        // 하단 광고 렌더링
+        function renderAdBottom(index) {
+            const ad = adsBottom[index];
+            const content = document.getElementById('adContentBottom');
+
+            content.classList.add('fade-out');
+
+            setTimeout(() => {
+                content.innerHTML = `
+                    <span class="ad-badge">SPONSORED</span>
+                    <div class="ad-text">
+                        <div class="ad-title">${ad.title}</div>
+                        <div class="ad-description">${ad.description}</div>
+                        <a href="${ad.btnLink}" class="ad-btn">${ad.btnText}</a>
+                    </div>
+                    <div class="ad-icon">${ad.icon}</div>
+                `;
+                content.classList.remove('fade-out');
+            }, 500);
+        }
+
+        // 광고 로테이션
+        function rotateAds() {
+            currentAdTopIndex = (currentAdTopIndex + 1) % adsTop.length;
+            currentAdBottomIndex = (currentAdBottomIndex + 1) % adsBottom.length;
+
+            renderAdTop(currentAdTopIndex);
+            renderAdBottom(currentAdBottomIndex);
+        }
+
+        // 초기 광고 표시
+        renderAdTop(0);
+        renderAdBottom(0);
+
+        // 5초마다 광고 변경
+        setInterval(rotateAds, 5000);
+    </script>
+</body>
+</html>

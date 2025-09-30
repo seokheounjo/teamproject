@@ -31,7 +31,7 @@ def project_index(request: Request, project_id: int, db: Session = Depends(get_d
 		db.add(project)
 		db.commit()
 		db.refresh(project)
-	return templates.TemplateResponse("project_home.html", {"request": request, "project": project})
+	return templates.TemplateResponse("project_home_v2.html", {"request": request, "project": project})
 
 @router.get("/{project_id}/kanban")
 def kanban(request: Request, project_id: int, db: Session = Depends(get_db)):
