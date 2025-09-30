@@ -18,7 +18,7 @@ def projects_list(request: Request, db: Session = Depends(get_db)):
 
 @router.get("/{project_id}")
 def project_index(request: Request, project_id: int, db: Session = Depends(get_db)):
-	"""프로젝트 메인 페이지 (칸반보드로 리다이렉트)"""
+	"""프로젝트 홈 페이지"""
 	project = db.query(Project).filter(Project.id == project_id).first()
 	if not project:
 		# 프로젝트가 없으면 기본 프로젝트 생성
@@ -31,7 +31,7 @@ def project_index(request: Request, project_id: int, db: Session = Depends(get_d
 		db.add(project)
 		db.commit()
 		db.refresh(project)
-	return templates.TemplateResponse("index.html", {"request": request, "project": project})
+	return templates.TemplateResponse("project_home.html", {"request": request, "project": project})
 
 @router.get("/{project_id}/kanban")
 def kanban(request: Request, project_id: int, db: Session = Depends(get_db)):
