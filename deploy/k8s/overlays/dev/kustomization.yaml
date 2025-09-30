@@ -7,7 +7,7 @@ resources:
 images:
 - name: app
   newName: ghcr.io/seokheounjo/dev-calendar
-  newTag: 92a6f86debb45c677b60c384b79fc890b8fa110e
+  newTag: b8bd9e61a910032009fb045a2cd420125e159d95
 patches:
 - patch: |-
     - op: replace
