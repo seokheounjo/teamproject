@@ -35,7 +35,7 @@ pipeline {
         withCredentials([string(credentialsId: 'github-token', variable: 'CR_PAT')]) {
           sh 'mkdir -p ${DOCKER_CONFIG}'
           sh 'echo $CR_PAT | docker login ghcr.io -u ${GITHUB_OWNER} --password-stdin'
-          sh 'docker build -t ${IMAGE}:latest -t ${IMAGE}:${SHA} .'
+          sh 'docker build --build-arg VERSION=${SHA} -t ${IMAGE}:latest -t ${IMAGE}:${SHA} .'
           sh 'docker push ${IMAGE}:latest'
           sh 'docker push ${IMAGE}:${SHA}'
         }

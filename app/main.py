@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import RedirectResponse
 from app.api import auth, projects, tasks, comments, advice, calendar, ws, api_projects, api_tasks
+import os
 
 # Ensure models are imported so metadata includes all tables
 from app.models import user as _user  # noqa: F401
@@ -14,6 +15,9 @@ from app.deps import engine
 from fastapi import Response
 
 app = FastAPI(title="Dev Calendar")
+
+# Get version from environment variable
+APP_VERSION = os.getenv("APP_VERSION", "dev")
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
 # Ensure tables exist for tests and local runs (in addition to startup)
@@ -42,3 +46,7 @@ def root():
 @app.get("/healthz")
 def healthz():
 	return Response(status_code=204)
+
+@app.get("/api/version")
+def get_version():
+	return {"version": APP_VERSION}

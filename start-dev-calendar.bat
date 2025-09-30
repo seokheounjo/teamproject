@@ -12,7 +12,7 @@ REM 잠시 대기
 timeout /t 3 /nobreak >nul
 
 echo [2/3] 웹 브라우저 실행...
-start http://localhost:8081
+start http://localhost:8081/projects/
 
 echo [3/3] 완료!
 echo.

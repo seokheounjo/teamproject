@@ -36,7 +36,7 @@ timeout /t 5 /nobreak >nul
 REM 브라우저 열기
 echo.
 echo [🌐] 웹 브라우저 실행 중...
-start http://localhost:8081
+start http://localhost:8081/projects/
 timeout /t 1 /nobreak >nul
 start https://localhost:8080
 timeout /t 1 /nobreak >nul

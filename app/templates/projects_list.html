@@ -17,10 +17,21 @@
             color: white;
             padding: 1rem 2rem;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
         .header h1 {
             font-size: 1.5rem;
             font-weight: 600;
+        }
+        .version-badge {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 0.375rem 0.75rem;
+            border-radius: 3px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            font-family: 'Courier New', monospace;
         }
         .container {
             max-width: 1200px;
@@ -207,6 +218,7 @@
 <body>
     <div class="header">
         <h1>📋 Dev Calendar</h1>
+        <div class="version-badge" id="version-display">Loading...</div>
     </div>
 
     <div class="container">
@@ -282,6 +294,18 @@
     </div>
 
     <script>
+        // Fetch and display version
+        fetch('/api/version')
+            .then(res => res.json())
+            .then(data => {
+                const version = data.version;
+                const shortVersion = version.length > 8 ? version.substring(0, 8) : version;
+                document.getElementById('version-display').textContent = `v${shortVersion}`;
+            })
+            .catch(() => {
+                document.getElementById('version-display').textContent = 'v-dev';
+            });
+
         function openCreateModal() {
             document.getElementById('createModal').classList.add('active');
         }

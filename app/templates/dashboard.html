@@ -31,6 +31,21 @@
             font-weight: 600;
             margin-bottom: 0.5rem;
         }
+        .sidebar-subtitle {
+            font-size: 0.75rem;
+            opacity: 0.8;
+        }
+        .version-badge {
+            margin-top: 0.75rem;
+            padding: 0.375rem 0.75rem;
+            background: rgba(255,255,255,0.15);
+            border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 4px;
+            font-size: 0.625rem;
+            font-weight: 500;
+            font-family: 'Courier New', monospace;
+            text-align: center;
+        }
         .sidebar-menu {
             flex: 1;
             padding: 1rem 0;
@@ -127,6 +142,8 @@
     <div class="sidebar">
         <div class="sidebar-header">
             <div class="sidebar-title">📋 Dev Calendar</div>
+            <div class="sidebar-subtitle">프로젝트 관리</div>
+            <div class="version-badge" id="version-display">Loading...</div>
         </div>
         <div class="sidebar-menu">
             <a href="/projects" class="menu-item">📊 내 프로젝트</a>
@@ -181,6 +198,18 @@
     </div>
 
     <script>
+        // Fetch and display version
+        fetch('/api/version')
+            .then(res => res.json())
+            .then(data => {
+                const version = data.version;
+                const shortVersion = version.length > 8 ? version.substring(0, 8) : version;
+                document.getElementById('version-display').textContent = `v${shortVersion}`;
+            })
+            .catch(() => {
+                document.getElementById('version-display').textContent = 'v-dev';
+            });
+
         // 상태별 차트
         new Chart(document.getElementById('statusChart'), {
             type: 'doughnut',
