@@ -3,31 +3,30 @@ kind: Kustomization
 namespace: prod
 namePrefix: prod-
 resources:
-  - ../../base
+- ../../base
 images:
-  - name: app
-    newName: ghcr.io/seokheounjo/dev-calendar
-    newTag: latest
+- name: app
+  newName: ghcr.io/seokheounjo/dev-calendar
+  newTag: c113fe7e38d20510d602bd79aca9b0439958918f
 patches:
-  - target:
-      kind: Deployment
-      name: dev-calendar
-    patch: |-
-      - op: replace
-        path: /spec/replicas
-        value: 2
-  - target:
-      kind: Namespace
-      name: app
-    patch: |-
-      - op: replace
-        path: /metadata/name
-        value: prod
-  - target:
-      kind: Ingress
-      name: dev-calendar
-    patch: |-
-      - op: replace
-        path: /spec/rules/0/host
-        value: prod.dev-calendar.local
-
+- patch: |-
+    - op: replace
+      path: /spec/replicas
+      value: 2
+  target:
+    kind: Deployment
+    name: dev-calendar
+- patch: |-
+    - op: replace
+      path: /metadata/name
+      value: prod
+  target:
+    kind: Namespace
+    name: app
+- patch: |-
+    - op: replace
+      path: /spec/rules/0/host
+      value: prod.dev-calendar.local
+  target:
+    kind: Ingress
+    name: dev-calendar

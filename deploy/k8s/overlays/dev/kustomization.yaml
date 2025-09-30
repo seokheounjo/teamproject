@@ -3,31 +3,30 @@ kind: Kustomization
 namespace: dev
 namePrefix: dev-
 resources:
-  - ../../base
+- ../../base
 images:
-  - name: app
-    newName: ghcr.io/seokheounjo/dev-calendar
-    newTag: latest
+- name: app
+  newName: ghcr.io/seokheounjo/dev-calendar
+  newTag: c113fe7e38d20510d602bd79aca9b0439958918f
 patches:
-  - target:
-      kind: Deployment
-      name: dev-calendar
-    patch: |-
-      - op: replace
-        path: /spec/replicas
-        value: 1
-  - target:
-      kind: Namespace
-      name: app
-    patch: |-
-      - op: replace
-        path: /metadata/name
-        value: dev
-  - target:
-      kind: Ingress
-      name: dev-calendar
-    patch: |-
-      - op: replace
-        path: /spec/rules/0/host
-        value: dev.dev-calendar.local
-
+- patch: |-
+    - op: replace
+      path: /spec/replicas
+      value: 1
+  target:
+    kind: Deployment
+    name: dev-calendar
+- patch: |-
+    - op: replace
+      path: /metadata/name
+      value: dev
+  target:
+    kind: Namespace
+    name: app
+- patch: |-
+    - op: replace
+      path: /spec/rules/0/host
+      value: dev.dev-calendar.local
+  target:
+    kind: Ingress
+    name: dev-calendar
