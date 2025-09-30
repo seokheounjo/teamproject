@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ project.name }} - 칸반 보드</title>
+    <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f4f5f7;
+            color: #172b4d;
+        }
+        .header {
+            background: white;
+            border-bottom: 2px solid #dfe1e6;
+            padding: 1rem 2rem;
+        }
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+            color: #5e6c84;
+        }
+        .breadcrumb a {
+            color: #5e6c84;
+            text-decoration: none;
+        }
+        .breadcrumb a:hover {
+            color: #0052cc;
+        }
+        .project-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #172b4d;
+            margin-top: 0.5rem;
+        }
+        .nav-tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+        .nav-tab {
+            padding: 0.5rem 1rem;
+            border: none;
+            background: none;
+            color: #5e6c84;
+            font-weight: 500;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            text-decoration: none;
+        }
+        .nav-tab.active {
+            color: #0052cc;
+            border-bottom-color: #0052cc;
+        }
+        .nav-tab:hover {
+            color: #172b4d;
+        }
+        .board-container {
+            max-width: 1400px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+        .board-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        .btn {
+            background: #0052cc;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 0.875rem;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .btn:hover {
+            background: #0747a6;
+        }
+        .board {
+            display: flex;
+            gap: 1rem;
+            overflow-x: auto;
+            padding-bottom: 1rem;
+        }
+        .column {
+            flex: 0 0 300px;
+            background: #f4f5f7;
+            border-radius: 3px;
+            padding: 0.75rem;
+        }
+        .column-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+            padding: 0 0.5rem;
+        }
+        .column-title {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: #5e6c84;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .task-count {
+            background: #dfe1e6;
+            color: #5e6c84;
+            padding: 0.125rem 0.5rem;
+            border-radius: 10px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .task-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            min-height: 100px;
+        }
+        .task-card {
+            background: white;
+            border-radius: 3px;
+            padding: 0.75rem;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+            cursor: pointer;
+            transition: box-shadow 0.2s;
+        }
+        .task-card:hover {
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+        .task-title {
+            font-size: 0.875rem;
+            color: #172b4d;
+            margin-bottom: 0.5rem;
+            line-height: 1.4;
+        }
+        .task-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.75rem;
+            color: #5e6c84;
+        }
+        .task-id {
+            font-weight: 600;
+        }
+        .priority-badge {
+            padding: 0.125rem 0.375rem;
+            border-radius: 3px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .priority-1 { background: #ffebe6; color: #bf2600; }
+        .priority-2 { background: #fff0b3; color: #ff8b00; }
+        .priority-3 { background: #e3fcef; color: #006644; }
+        .add-task-btn {
+            width: 100%;
+            background: transparent;
+            border: 2px dashed #dfe1e6;
+            color: #5e6c84;
+            padding: 0.5rem;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+        }
+        .add-task-btn:hover {
+            background: #f4f5f7;
+            border-color: #0052cc;
+            color: #0052cc;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-content">
+            <div>
+                <div class="breadcrumb">
+                    <a href="/projects">프로젝트</a>
+                    <span>/</span>
+                    <span>{{ project.name }}</span>
+                </div>
+                <h1 class="project-title">{{ project.name }}</h1>
+                <div class="nav-tabs">
+                    <a href="/projects/{{ project.id }}/kanban" class="nav-tab active">칸반 보드</a>
+                    <a href="/projects/{{ project.id }}/calendar" class="nav-tab">캘린더</a>
+                    <a href="/projects/{{ project.id }}/backlog" class="nav-tab">백로그</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="board-container">
+        <div class="board-header">
+            <h2></h2>
+            <button class="btn" onclick="alert('새 태스크 생성 기능 개발 예정')">+ 새 태스크</button>
+        </div>
+
+        <div class="board">
+            {% set columns = [
+                ("Backlog", "백로그"),
+                ("Planned", "계획됨"),
+                ("InProgress", "진행 중"),
+                ("Review", "리뷰"),
+                ("Done", "완료")
+            ] %}
+
+            {% for col_id, col_name in columns %}
+            <div class="column">
+                <div class="column-header">
+                    <span class="column-title">{{ col_name }}</span>
+                    <span class="task-count">{{ tasks|selectattr('status', 'equalto', col_id)|list|length }}</span>
+                </div>
+                <div class="task-list">
+                    {% for task in tasks if task.status == col_id %}
+                    <div class="task-card">
+                        <div class="task-title">{{ task.title }}</div>
+                        <div class="task-meta">
+                            <span class="task-id">TASK-{{ task.id }}</span>
+                            {% if task.priority %}
+                            <span class="priority-badge priority-{{ task.priority }}">
+                                {% if task.priority == 1 %}높음
+                                {% elif task.priority == 2 %}중간
+                                {% else %}낮음{% endif %}
+                            </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                <button class="add-task-btn">+ 태스크 추가</button>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dev Calendar - My Projects</title>
+    <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #f4f5f7;
+            color: #172b4d;
+        }
+        .header {
+            background: #0052cc;
+            color: white;
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .header h1 {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+        .page-header h2 {
+            font-size: 1.75rem;
+            font-weight: 600;
+        }
+        .btn {
+            background: #0052cc;
+            color: white;
+            border: none;
+            padding: 0.625rem 1.25rem;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 0.875rem;
+            font-weight: 500;
+            text-decoration: none;
+            display: inline-block;
+            transition: background 0.2s;
+        }
+        .btn:hover {
+            background: #0747a6;
+        }
+        .btn-secondary {
+            background: #f4f5f7;
+            color: #42526e;
+        }
+        .btn-secondary:hover {
+            background: #ebecf0;
+        }
+        .projects-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+        .project-card {
+            background: white;
+            border-radius: 3px;
+            padding: 1.5rem;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+            transition: box-shadow 0.2s, transform 0.2s;
+            cursor: pointer;
+            text-decoration: none;
+            color: inherit;
+            display: block;
+        }
+        .project-card:hover {
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+            transform: translateY(-2px);
+        }
+        .project-name {
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #172b4d;
+        }
+        .project-desc {
+            color: #5e6c84;
+            font-size: 0.875rem;
+            margin-bottom: 1rem;
+            line-height: 1.4;
+        }
+        .project-meta {
+            display: flex;
+            gap: 1rem;
+            font-size: 0.75rem;
+            color: #5e6c84;
+        }
+        .project-meta span {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            border-radius: 3px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .status-active {
+            background: #e3fcef;
+            color: #006644;
+        }
+        .status-archived {
+            background: #dfe1e6;
+            color: #5e6c84;
+        }
+        .status-completed {
+            background: #deebff;
+            color: #0052cc;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            background: white;
+            border-radius: 3px;
+        }
+        .empty-state h3 {
+            font-size: 1.25rem;
+            margin-bottom: 0.5rem;
+            color: #172b4d;
+        }
+        .empty-state p {
+            color: #5e6c84;
+            margin-bottom: 1.5rem;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(9, 30, 66, 0.54);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal.active {
+            display: flex;
+        }
+        .modal-content {
+            background: white;
+            border-radius: 3px;
+            padding: 2rem;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+        }
+        .modal-header {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+        }
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            font-size: 0.875rem;
+            color: #172b4d;
+        }
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 0.5rem;
+            border: 2px solid #dfe1e6;
+            border-radius: 3px;
+            font-size: 0.875rem;
+            font-family: inherit;
+        }
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #0052cc;
+        }
+        .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+        .modal-actions {
+            display: flex;
+            gap: 0.75rem;
+            justify-content: flex-end;
+            margin-top: 1.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📋 Dev Calendar</h1>
+    </div>
+
+    <div class="container">
+        <div class="page-header">
+            <h2>내 프로젝트</h2>
+            <button class="btn" onclick="openCreateModal()">+ 새 프로젝트</button>
+        </div>
+
+        <div class="projects-grid" id="projects-list">
+            {% if projects %}
+                {% for project in projects %}
+                <a href="/projects/{{ project.id }}" class="project-card">
+                    <div class="project-name">{{ project.name }}</div>
+                    <div class="project-desc">{{ project.description or '프로젝트 설명이 없습니다.' }}</div>
+                    <div class="project-meta">
+                        <span class="status-badge status-{{ project.status.value.lower() }}">
+                            {{ project.status.value }}
+                        </span>
+                        <span>📅 {{ project.created_at.strftime('%Y-%m-%d') }}</span>
+                    </div>
+                </a>
+                {% endfor %}
+            {% else %}
+                <div class="empty-state" style="grid-column: 1 / -1;">
+                    <h3>아직 프로젝트가 없습니다</h3>
+                    <p>첫 프로젝트를 만들어 작업을 시작하세요!</p>
+                    <button class="btn" onclick="openCreateModal()">+ 프로젝트 만들기</button>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Create Project Modal -->
+    <div id="createModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">새 프로젝트 만들기</div>
+            <form hx-post="/api/projects/create" hx-target="#projects-list" hx-swap="innerHTML" hx-on::after-request="closeCreateModal()">
+                <div class="form-group">
+                    <label for="name">프로젝트 이름 *</label>
+                    <input type="text" id="name" name="name" required placeholder="예: 웹 앱 개발">
+                </div>
+                <div class="form-group">
+                    <label for="description">설명</label>
+                    <textarea id="description" name="description" placeholder="프로젝트에 대한 간단한 설명을 입력하세요"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="status">상태</label>
+                    <select id="status" name="status">
+                        <option value="Active">진행 중</option>
+                        <option value="Archived">보관됨</option>
+                        <option value="Completed">완료됨</option>
+                    </select>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeCreateModal()">취소</button>
+                    <button type="submit" class="btn">만들기</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function openCreateModal() {
+            document.getElementById('createModal').classList.add('active');
+        }
+
+        function closeCreateModal() {
+            document.getElementById('createModal').classList.remove('active');
+            document.querySelector('#createModal form').reset();
+        }
+
+        // Click outside to close modal
+        document.getElementById('createModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeCreateModal();
+            }
+        });
+    </script>
+</body>
+</html>
