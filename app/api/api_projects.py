@@ -120,14 +120,26 @@ def update_project_settings(
 
     project.goals = goals
     try:
-        project.milestones = json.loads(milestones) if milestones else []
-        project.sprints = json.loads(sprints) if sprints else []
-    except json.JSONDecodeError:
+        milestone_data = json.loads(milestones) if milestones and milestones != "[]" else []
+        sprint_data = json.loads(sprints) if sprints and sprints != "[]" else []
+
+        project.milestones = milestone_data
+        project.sprints = sprint_data
+
+        print(f"DEBUG: Saved milestones: {project.milestones}")
+        print(f"DEBUG: Saved sprints: {project.sprints}")
+    except json.JSONDecodeError as e:
+        print(f"DEBUG: JSON decode error: {e}")
         return {"error": "Invalid JSON format"}
 
     db.commit()
     db.refresh(project)
-    return {"success": True, "project_id": project_id}
+    return {
+        "success": True,
+        "project_id": project_id,
+        "milestones": project.milestones,
+        "sprints": project.sprints
+    }
 
 @router.get("/{project_id}/progress")
 def get_project_progress(project_id: int, db: Session = Depends(get_db)):

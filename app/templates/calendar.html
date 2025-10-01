@@ -242,9 +242,100 @@
             margin-bottom: 1rem;
         }
 
+        /* 칸반 보드 스타일 */
+        .kanban-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1rem;
+        }
+
+        .kanban-column {
+            background: #f3f4f6;
+            border-radius: 12px;
+            padding: 1rem;
+            min-height: 200px;
+        }
+
+        .kanban-column-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+            font-weight: 600;
+            color: #374151;
+        }
+
+        .kanban-column-title {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .kanban-count {
+            background: #e5e7eb;
+            padding: 0.25rem 0.5rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+        }
+
+        .kanban-task {
+            background: white;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .kanban-task:hover {
+            box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+            transform: translateY(-2px);
+        }
+
+        .kanban-task-title {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #111827;
+        }
+
+        .kanban-task-meta {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.75rem;
+            color: #6b7280;
+        }
+
+        .kanban-priority {
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .kanban-priority.high {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .kanban-priority.medium {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .kanban-priority.low {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
         @media (max-width: 1024px) {
             .stats-grid {
                 grid-template-columns: repeat(2, 1fr);
+            }
+            .kanban-container {
+                grid-template-columns: 1fr;
             }
         }
 
@@ -293,6 +384,18 @@
             </h2>
 
             <div class="gantt-chart" id="gantt-chart">
+                <!-- JavaScript로 동적 생성 -->
+            </div>
+        </div>
+
+        <!-- 칸반 보드 섹션 -->
+        <div class="timeline-section">
+            <h2 class="section-title">
+                <span>📋</span>
+                작업 칸반 보드
+            </h2>
+
+            <div class="kanban-container" id="kanban-board">
                 <!-- JavaScript로 동적 생성 -->
             </div>
         </div>
@@ -438,10 +541,78 @@
             container.innerHTML = html;
         }
 
+        // 칸반 보드 렌더링
+        async function renderKanbanBoard() {
+            try {
+                const response = await fetch(`/api/tasks?project_id=${project.id}`);
+                const tasks = await response.json();
+
+                const columns = {
+                    'Backlog': { icon: '📝', tasks: [] },
+                    'Todo': { icon: '📋', tasks: [] },
+                    'InProgress': { icon: '🚀', tasks: [] },
+                    'Done': { icon: '✅', tasks: [] }
+                };
+
+                tasks.forEach(task => {
+                    const status = task.status || 'Backlog';
+                    if (columns[status]) {
+                        columns[status].tasks.push(task);
+                    }
+                });
+
+                const container = document.getElementById('kanban-board');
+                let html = '';
+
+                for (const [status, data] of Object.entries(columns)) {
+                    const statusLabel = {
+                        'Backlog': '백로그',
+                        'Todo': '할 일',
+                        'InProgress': '진행 중',
+                        'Done': '완료'
+                    }[status] || status;
+
+                    html += `
+                        <div class="kanban-column">
+                            <div class="kanban-column-header">
+                                <div class="kanban-column-title">
+                                    <span>${data.icon}</span>
+                                    <span>${statusLabel}</span>
+                                </div>
+                                <span class="kanban-count">${data.tasks.length}</span>
+                            </div>
+                    `;
+
+                    data.tasks.forEach(task => {
+                        const priorityClass = task.priority === 1 ? 'high' : task.priority === 2 ? 'medium' : 'low';
+                        const priorityLabel = task.priority === 1 ? '높음' : task.priority === 2 ? '중간' : '낮음';
+                        const dueDate = task.due_date ? new Date(task.due_date).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' }) : '';
+
+                        html += `
+                            <div class="kanban-task" onclick="window.location.href='/projects/${project.id}/kanban'">
+                                <div class="kanban-task-title">${task.title}</div>
+                                <div class="kanban-task-meta">
+                                    <span class="kanban-priority ${priorityClass}">${priorityLabel}</span>
+                                    ${dueDate ? `<span>📅 ${dueDate}</span>` : ''}
+                                </div>
+                            </div>
+                        `;
+                    });
+
+                    html += `</div>`;
+                }
+
+                container.innerHTML = html;
+            } catch (error) {
+                console.error('Kanban load error:', error);
+            }
+        }
+
         // 초기화
         loadProgress();
         calculateDaysRemaining();
         renderGanttChart();
+        renderKanbanBoard();
     </script>
 </body>
 </html>
