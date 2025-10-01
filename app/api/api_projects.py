@@ -103,3 +103,28 @@ def delete_project(project_id: int, db: Session = Depends(get_db)):
         db.commit()
         return {"success": True}
     return {"error": "Project not found"}
+
+@router.post("/{project_id}/settings")
+def update_project_settings(
+    project_id: int,
+    goals: str = Form(""),
+    milestones: str = Form("[]"),
+    sprints: str = Form("[]"),
+    db: Session = Depends(get_db)
+):
+    """프로젝트 상세 설정 업데이트"""
+    import json
+    project = db.query(Project).filter(Project.id == project_id).first()
+    if not project:
+        return {"error": "Project not found"}
+
+    project.goals = goals
+    try:
+        project.milestones = json.loads(milestones) if milestones else []
+        project.sprints = json.loads(sprints) if sprints else []
+    except json.JSONDecodeError:
+        return {"error": "Invalid JSON format"}
+
+    db.commit()
+    db.refresh(project)
+    return {"success": True, "project_id": project_id}

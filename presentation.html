@@ -1,0 +1,1163 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dev Calendar - 완전 자동화 CI/CD 시스템</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 50%, #3b82f6 100%);
+            color: #fff;
+            overflow: hidden;
+        }
+
+        .presentation {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .slide {
+            width: 85%;
+            max-width: 1400px;
+            height: 85vh;
+            background: rgba(255, 255, 255, 0.98);
+            border-radius: 12px;
+            padding: 48px 64px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+            display: none;
+            flex-direction: column;
+            color: #1a202c;
+            position: relative;
+            animation: slideIn 0.5s ease-out;
+            overflow: hidden;
+        }
+
+        .slide.active {
+            display: flex;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .slide-header {
+            margin-bottom: 28px;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 20px;
+        }
+
+        .slide-number {
+            font-size: 12px;
+            color: #94a3b8;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 500;
+        }
+
+        h1 {
+            font-size: 42px;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 12px;
+            letter-spacing: -1px;
+        }
+
+        h2 {
+            font-size: 32px;
+            color: #1e293b;
+            margin-bottom: 0;
+            font-weight: 600;
+            letter-spacing: -0.5px;
+        }
+
+        h3 {
+            font-size: 20px;
+            color: #475569;
+            margin-bottom: 16px;
+            font-weight: 600;
+        }
+
+        .subtitle {
+            font-size: 18px;
+            color: #64748b;
+            margin-bottom: 0;
+            font-weight: 400;
+        }
+
+        .slide-content {
+            flex: 1;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 18px;
+            margin-top: 20px;
+        }
+
+        .feature-card {
+            background: #f8fafc;
+            padding: 20px 24px;
+            border-radius: 6px;
+            border: 1px solid #e2e8f0;
+            transition: all 0.3s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(30, 64, 175, 0.08);
+            border-color: #94a3b8;
+        }
+
+        .feature-icon {
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+
+        .feature-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 6px;
+        }
+
+        .feature-desc {
+            font-size: 14px;
+            color: #64748b;
+            line-height: 1.5;
+        }
+
+        .architecture-diagram {
+            background: #f8fafc;
+            border-radius: 6px;
+            padding: 20px;
+            margin: 16px 0;
+            border: 1px solid #e2e8f0;
+        }
+
+        .flow-step {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+            padding: 14px 16px;
+            background: white;
+            border-radius: 6px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .step-number {
+            width: 36px;
+            height: 36px;
+            background: #1e40af;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            margin-right: 16px;
+            flex-shrink: 0;
+            font-size: 14px;
+        }
+
+        .step-content {
+            flex: 1;
+        }
+
+        .step-title {
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 4px;
+            font-size: 15px;
+        }
+
+        .step-desc {
+            font-size: 13px;
+            color: #64748b;
+            line-height: 1.4;
+        }
+
+        .code-block {
+            background: #0f172a;
+            color: #e2e8f0;
+            padding: 20px 24px;
+            border-radius: 6px;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 13px;
+            overflow-x: auto;
+            margin: 16px 0;
+            line-height: 1.6;
+            border: 1px solid #1e293b;
+            white-space: pre;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .code-block .comment {
+            color: #86efac;
+            font-style: italic;
+        }
+
+        .code-block .keyword {
+            color: #60a5fa;
+            font-weight: 500;
+        }
+
+        .code-block .string {
+            color: #fbbf24;
+        }
+
+        .code-block .indent {
+            display: inline-block;
+            width: 2em;
+        }
+
+        .timeline {
+            position: relative;
+            padding-left: 32px;
+            margin: 16px 0;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 12px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: #cbd5e0;
+        }
+
+        .timeline-item {
+            position: relative;
+            margin-bottom: 20px;
+            padding-left: 24px;
+        }
+
+        .timeline-dot {
+            position: absolute;
+            left: -20px;
+            top: 4px;
+            width: 8px;
+            height: 8px;
+            background: #1e40af;
+            border-radius: 50%;
+            border: 2px solid white;
+            box-shadow: 0 0 0 2px #e2e8f0;
+        }
+
+        .timeline-title {
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 4px;
+            font-size: 15px;
+        }
+
+        .timeline-desc {
+            color: #64748b;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin: 20px 0;
+        }
+
+        .stat-card {
+            text-align: center;
+            padding: 20px 16px;
+            background: #f8fafc;
+            border-radius: 6px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .stat-number {
+            font-size: 36px;
+            font-weight: 600;
+            color: #1e40af;
+            letter-spacing: -1px;
+        }
+
+        .stat-label {
+            font-size: 13px;
+            color: #64748b;
+            margin-top: 6px;
+            font-weight: 500;
+        }
+
+        .navigation {
+            position: absolute;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 12px 24px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .nav-btn {
+            background: #1e40af;
+            color: white;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            letter-spacing: 0.3px;
+        }
+
+        .nav-btn:hover {
+            background: #1e3a8a;
+            transform: translateY(-1px);
+        }
+
+        .nav-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .dots {
+            display: flex;
+            gap: 8px;
+        }
+
+        .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #cbd5e0;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .dot.active {
+            background: #3b82f6;
+            width: 32px;
+            border-radius: 5px;
+        }
+
+        .highlight {
+            background: linear-gradient(135deg, #667eea20 0%, #764ba220 100%);
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+
+        .tag {
+            display: inline-block;
+            padding: 8px 16px;
+            background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+            color: white;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 500;
+            margin: 4px;
+            letter-spacing: 0.3px;
+        }
+
+        .problem-solution {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin: 24px 0;
+        }
+
+        .problem-box,
+        .solution-box {
+            padding: 24px;
+            border-radius: 16px;
+            border: 2px solid;
+        }
+
+        .problem-box {
+            background: #fff5f5;
+            border-color: #fc8181;
+        }
+
+        .solution-box {
+            background: #f0fff4;
+            border-color: #68d391;
+        }
+
+        .box-title {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+
+        .problem-box .box-title {
+            color: #c53030;
+        }
+
+        .solution-box .box-title {
+            color: #2f855a;
+        }
+
+        ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        ul li {
+            padding: 8px 0;
+            padding-left: 28px;
+            position: relative;
+        }
+
+        ul li::before {
+            content: '→';
+            position: absolute;
+            left: 0;
+            color: #667eea;
+            font-weight: bold;
+        }
+
+        .tech-stack {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 16px 0;
+        }
+
+        .tech-item {
+            padding: 8px 16px;
+            background: #f8fafc;
+            border-radius: 6px;
+            border: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .tech-item:hover {
+            border-color: #94a3b8;
+            background: white;
+        }
+
+        .tech-icon {
+            font-size: 20px;
+        }
+
+        .contact {
+            background: #1e40af;
+            color: white;
+            padding: 24px 32px;
+            border-radius: 6px;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .contact h3 {
+            color: white;
+            margin-bottom: 16px;
+        }
+
+        .contact a {
+            color: white;
+            text-decoration: none;
+            font-size: 18px;
+            font-weight: 500;
+            border-bottom: 2px solid white;
+            padding-bottom: 2px;
+        }
+    </style>
+</head>
+<body>
+    <div class="presentation">
+        <!-- Slide 1: Title -->
+        <div class="slide active">
+            <div class="slide-header">
+                <div class="slide-number">01 / 12</div>
+                <h1>Dev Calendar</h1>
+                <div class="subtitle">완전 자동화 CI/CD 시스템 구축</div>
+            </div>
+            <div class="slide-content">
+                <div class="feature-grid" style="margin-bottom: 20px;">
+                    <div class="feature-card">
+                        <div class="feature-icon">🚀</div>
+                        <div class="feature-title">원클릭 배포</div>
+                        <div class="feature-desc">start.bat 하나로 모든 환경 자동 구성</div>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🔄</div>
+                        <div class="feature-title">GitOps 기반</div>
+                        <div class="feature-desc">Git 기반 선언적 배포 관리</div>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">⚡</div>
+                        <div class="feature-title">자동 롤백</div>
+                        <div class="feature-desc">실패 시 이전 버전 자동 복구</div>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🌍</div>
+                        <div class="feature-title">멀티 환경</div>
+                        <div class="feature-desc">Dev/Prod 환경 완전 분리</div>
+                    </div>
+                </div>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-number">1</div>
+                        <div class="stat-label">클릭으로 배포</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">11</div>
+                        <div class="stat-label">자동화 단계</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">0</div>
+                        <div class="stat-label">수동 작업</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">100%</div>
+                        <div class="stat-label">자동화율</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 2: Architecture Overview -->
+        <div class="slide">
+            <div class="slide-header">
+                <div class="slide-number">02 / 12</div>
+                <h2>시스템 아키텍처</h2>
+            </div>
+            <div class="slide-content">
+                <div class="architecture-diagram">
+                    <div class="flow-step">
+                        <div class="step-number">1</div>
+                        <div class="step-content">
+                            <div class="step-title">개발자 워크스테이션</div>
+                            <div class="step-desc">start.bat 실행 → 로컬 환경 자동 구성 (Python, Docker, Kubernetes)</div>
+                        </div>
+                    </div>
+                    <div class="flow-step">
+                        <div class="step-number">2</div>
+                        <div class="step-content">
+                            <div class="step-title">Git Push & CI 파이프라인</div>
+                            <div class="step-desc">GitHub Actions → Docker 이미지 빌드 → GHCR 푸시 → 매니페스트 업데이트</div>
+                        </div>
+                    </div>
+                    <div class="flow-step">
+                        <div class="step-number">3</div>
+                        <div class="step-content">
+                            <div class="step-title">GitOps CD 파이프라인</div>
+                            <div class="step-desc">ArgoCD가 Git 변경 감지 → 자동 동기화 → Kubernetes 배포</div>
+                        </div>
+                    </div>
+                    <div class="flow-step">
+                        <div class="step-number">4</div>
+                        <div class="step-content">
+                            <div class="step-title">운영 환경</div>
+                            <div class="step-desc">고가용성 배포 (Replicas: 2) → 헬스 체크 → 자동 롤백</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 3: Tech Stack -->
+        <div class="slide">
+            <div class="slide-header">
+                <div class="slide-number">03 / 12</div>
+                <h2>핵심 기술 스택</h2>
+            </div>
+            <div class="slide-content">
+                <h3>백엔드 & 프론트엔드</h3>
+                <div class="tech-stack">
+                    <div class="tech-item">
+                        <div class="tech-icon">🐍</div>
+                        <span>Django 5.1.1</span>
+                    </div>
+                    <div class="tech-item">
+                        <div class="tech-icon">🔌</div>
+                        <span>Django REST Framework</span>
+                    </div>
+                    <div class="tech-item">
+                        <div class="tech-icon">🎨</div>
+                        <span>Bootstrap</span>
+                    </div>
+                    <div class="tech-item">
+                        <div class="tech-icon">💾</div>
+                        <span>SQLite</span>
+                    </div>
+                </div>
+
+                <h3>컨테이너 & 오케스트레이션</h3>
+                <div class="tech-stack">
+                    <div class="tech-item">
+                        <div class="tech-icon">🐳</div>
+                        <span>Docker</span>
+                    </div>
+                    <div class="tech-item">
+                        <div class="tech-icon">☸️</div>
+                        <span>Kubernetes (Minikube)</span>
+                    </div>
+                    <div class="tech-item">
+                        <div class="tech-icon">🔧</div>
+                        <span>Kustomize</span>
+                    </div>
+                </div>
+
+                <h3>CI/CD & GitOps</h3>
+                <div class="tech-stack">
+                    <div class="tech-item">
+                        <div class="tech-icon">⚙️</div>
+                        <span>GitHub Actions</span>
+                    </div>
+                    <div class="tech-item">
+                        <div class="tech-icon">🔄</div>
+                        <span>ArgoCD</span>
+                    </div>
+                    <div class="tech-item">
+                        <div class="tech-icon">📦</div>
+                        <span>GHCR</span>
+                    </div>
+                </div>
+
+                <h3>자동화</h3>
+                <div class="tech-stack">
+                    <div class="tech-item">
+                        <div class="tech-icon">💻</div>
+                        <span>PowerShell</span>
+                    </div>
+                    <div class="tech-item">
+                        <div class="tech-icon">📝</div>
+                        <span>Batch Script</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 4: Automation Workflow -->
+        <div class="slide">
+            <div class="slide-header">
+                <div class="slide-number">04 / 12</div>
+                <h2>11단계 자동화 워크플로우</h2>
+            </div>
+            <div class="slide-content">
+                <div class="timeline">
+                    <div class="timeline-item">
+                        <div class="timeline-dot"></div>
+                        <div class="timeline-title">Python 가상환경 구성</div>
+                        <div class="timeline-desc">venv 자동 생성 및 의존성 설치</div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-dot"></div>
+                        <div class="timeline-title">Docker Desktop 확인</div>
+                        <div class="timeline-desc">컨테이너 런타임 실행 상태 검증</div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-dot"></div>
+                        <div class="timeline-title">Kubernetes 클러스터 시작</div>
+                        <div class="timeline-desc">Minikube 자동 시작 및 연결 확인</div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-dot"></div>
+                        <div class="timeline-title">ArgoCD 설치 & 구성</div>
+                        <div class="timeline-desc">GitOps 도구 자동 배포 및 비밀번호 조회</div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-dot"></div>
+                        <div class="timeline-title">애플리케이션 배포</div>
+                        <div class="timeline-desc">Dev Calendar를 Kubernetes 클러스터에 배포</div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-dot"></div>
+                        <div class="timeline-title">포트포워딩 & 브라우저 실행</div>
+                        <div class="timeline-desc">서비스 노출 및 웹 인터페이스 자동 오픈</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 5: Technical Challenge -->
+        <div class="slide">
+            <div class="slide-header">
+                <div class="slide-number">05 / 12</div>
+                <h2>기술적 도전과제</h2>
+            </div>
+            <div class="slide-content">
+                <div class="problem-solution">
+                    <div class="problem-box">
+                        <div class="box-title">❌ 문제: Windows 배치 파일 종료</div>
+                        <p style="margin: 12px 0;">minikube.exe, kubectl.exe 실행 시 배치 스크립트가 예기치 않게 종료되는 현상</p>
+                        <div class="code-block">
+<span class="comment"># 배치 파일에서 실행</span>
+minikube status <span class="keyword">>nul</span> <span class="keyword">2>&1</span>
+<span class="comment"># ← 여기서 스크립트 종료!</span>
+<span class="comment"># 이후 코드 실행 안됨</span>
+                        </div>
+                        <ul>
+                            <li>call 키워드 사용 → 실패</li>
+                            <li>PowerShell 래퍼 → 실패</li>
+                            <li>임시 파일 생성 → 실패</li>
+                        </ul>
+                    </div>
+                    <div class="solution-box">
+                        <div class="box-title">✅ 해결: PowerShell 완전 마이그레이션</div>
+                        <p style="margin: 12px 0;">모든 로직을 PowerShell로 재작성하여 근본적으로 해결</p>
+                        <div class="code-block">
+<span class="comment"># PowerShell 스크립트</span>
+minikube start --driver=docker
+<span class="keyword">if</span> (<span class="keyword">$LASTEXITCODE</span> -ne <span class="string">0</span>) {
+    Write-Host <span class="string">"[ERROR] 실패!"</span>
+    <span class="keyword">exit</span> <span class="string">1</span>
+}
+<span class="comment"># 정상 실행됨!</span>
+                        </div>
+                        <ul>
+                            <li>외부 실행 파일 호출 문제 없음</li>
+                            <li>강력한 에러 처리</li>
+                            <li>Base64 디코딩 등 고급 기능</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 6: CI Pipeline -->
+        <div class="slide">
+            <div class="slide-header">
+                <div class="slide-number">06 / 12</div>
+                <h2>CI 파이프라인 (GitHub Actions)</h2>
+            </div>
+            <div class="slide-content">
+                <div class="code-block"><span class="keyword">name:</span> CI/CD Pipeline
+
+<span class="keyword">on:</span>
+  <span class="keyword">push:</span>
+    <span class="keyword">branches:</span> [master]
+
+<span class="keyword">jobs:</span>
+  <span class="keyword">build-and-deploy:</span>
+    <span class="keyword">runs-on:</span> ubuntu-latest
+    <span class="keyword">steps:</span>
+      - <span class="keyword">name:</span> Checkout code
+        <span class="keyword">uses:</span> actions/checkout@v3
+
+      - <span class="keyword">name:</span> Build Docker image
+        <span class="keyword">run:</span> |
+          docker build \
+            --build-arg GIT_COMMIT=<span class="string">${{ github.sha }}</span> \
+            -t ghcr.io/<span class="string">${{ github.repository }}</span>:<span class="string">${{ github.sha }}</span> .
+
+      - <span class="keyword">name:</span> Push to GHCR
+        <span class="keyword">run:</span> docker push ghcr.io/<span class="string">${{ github.repository }}</span>
+
+      - <span class="keyword">name:</span> Update Kustomize
+        <span class="keyword">run:</span> |
+          cd deploy/k8s/overlays/prod
+          kustomize edit set image \
+            app=ghcr.io/<span class="string">${{ github.repository }}:${{ github.sha }}</span>
+          git commit -m <span class="string">"Update to ${{ github.sha }}"</span>
+          git push</div>
+                <div style="margin-top: 24px;">
+                    <span class="tag">자동 빌드</span>
+                    <span class="tag">이미지 푸시</span>
+                    <span class="tag">매니페스트 업데이트</span>
+                    <span class="tag">Git SHA 태깅</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 7: CD Pipeline -->
+        <div class="slide">
+            <div class="slide-header">
+                <div class="slide-number">07 / 12</div>
+                <h2>CD 파이프라인 (ArgoCD GitOps)</h2>
+            </div>
+            <div class="slide-content">
+                <h3 style="margin-bottom: 12px;">ArgoCD 동작 원리</h3>
+                <div class="architecture-diagram" style="margin: 12px 0; padding: 16px;">
+                    <div class="flow-step" style="margin: 8px 0; padding: 12px 14px;">
+                        <div class="step-number">1</div>
+                        <div class="step-content">
+                            <div class="step-title">Git 저장소 모니터링</div>
+                            <div class="step-desc">3분마다 폴링하여 변경사항 감지</div>
+                        </div>
+                    </div>
+                    <div class="flow-step" style="margin: 8px 0; padding: 12px 14px;">
+                        <div class="step-number">2</div>
+                        <div class="step-content">
+                            <div class="step-title">변경 감지 & 동기화</div>
+                            <div class="step-desc">Kustomization.yaml의 이미지 태그 변경 확인</div>
+                        </div>
+                    </div>
+                    <div class="flow-step" style="margin: 8px 0; padding: 12px 14px;">
+                        <div class="step-number">3</div>
+                        <div class="step-content">
+                            <div class="step-title">Kubernetes 리소스 적용</div>
+                            <div class="step-desc">kubectl apply -k로 Rolling Update 수행</div>
+                        </div>
+                    </div>
+                    <div class="flow-step" style="margin: 8px 0; padding: 12px 14px;">
+                        <div class="step-number">4</div>
+                        <div class="step-content">
+                            <div class="step-title">헬스 체크 & 롤백</div>
+                            <div class="step-desc">Pod Ready 확인, 실패 시 자동 롤백</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="contact" style="margin: 16px 0; padding: 20px 28px;">
+                    <h3 style="margin-bottom: 8px; font-size: 18px;">GitOps 핵심 원칙</h3>
+                    <p style="font-size: 14px; line-height: 1.6;">Git = Single Source of Truth<br>모든 배포는 Git 커밋으로 추적 가능</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 8: Multi-Environment -->
+        <div class="slide">
+            <div class="slide-header">
+                <div class="slide-number">08 / 12</div>
+                <h2>멀티 환경 관리 (Kustomize)</h2>
+            </div>
+            <div class="slide-content">
+                <h3 style="margin-bottom: 12px;">환경별 설정 분리</h3>
+                <div class="feature-grid" style="margin: 12px 0; gap: 14px;">
+                    <div class="feature-card" style="padding: 16px 20px;">
+                        <div class="feature-icon">🔧</div>
+                        <div class="feature-title">Base 리소스</div>
+                        <div class="feature-desc">공통 Deployment, Service 정의</div>
+                    </div>
+                    <div class="feature-card" style="padding: 16px 20px;">
+                        <div class="feature-icon">💻</div>
+                        <div class="feature-title">Dev Overlay</div>
+                        <div class="feature-desc">Replicas: 1, dev 네임스페이스</div>
+                    </div>
+                    <div class="feature-card" style="padding: 16px 20px;">
+                        <div class="feature-icon">🚀</div>
+                        <div class="feature-title">Prod Overlay</div>
+                        <div class="feature-desc">Replicas: 2, 고가용성</div>
+                    </div>
+                    <div class="feature-card" style="padding: 16px 20px;">
+                        <div class="feature-icon">🎯</div>
+                        <div class="feature-title">이미지 태깅</div>
+                        <div class="feature-desc">환경별 이미지 버전 관리</div>
+                    </div>
+                </div>
+                <div class="code-block" style="margin: 12px 0; padding: 16px 20px; font-size: 12px; line-height: 1.5; max-height: 280px;"><span class="comment"># overlays/prod/kustomization.yaml</span>
+
+<span class="keyword">apiVersion:</span> kustomize.config.k8s.io/v1beta1
+<span class="keyword">kind:</span> Kustomization
+<span class="keyword">namespace:</span> prod
+<span class="keyword">namePrefix:</span> prod-
+
+<span class="keyword">resources:</span>  - ../../base
+<span class="keyword">images:</span>
+  - <span class="keyword">name:</span> app
+    <span class="keyword">newName:</span> ghcr.io/username/dev-calendar
+    <span class="keyword">newTag:</span> abc123def  <span class="comment"># CI 자동 업데이트</span>
+<span class="keyword">patches:</span>
+  - <span class="keyword">patch:</span> |-
+      - <span class="keyword">op:</span> replace
+        <span class="keyword">path:</span> /spec/replicas
+        <span class="keyword">value:</span> <span class="string">2</span></div>
+            </div>
+        </div>
+
+        <!-- Slide 9: Auto Rollback -->
+        <div class="slide">
+            <div class="slide-header">
+                <div class="slide-number">09 / 12</div>
+                <h2>자동 롤백 & 헬스 체크</h2>
+            </div>
+            <div class="slide-content">
+                <h3 style="margin-bottom: 12px;">배포 안정성 보장</h3>
+                <div class="architecture-diagram" style="margin: 12px 0; padding: 16px;">
+                    <div class="flow-step" style="margin: 8px 0; padding: 12px 14px;">
+                        <div class="step-number">✓</div>
+                        <div class="step-content">
+                            <div class="step-title">Readiness Probe</div>
+                            <div class="step-desc">트래픽 수신 준비 상태 확인</div>
+                        </div>
+                    </div>
+                    <div class="flow-step" style="margin: 8px 0; padding: 12px 14px;">
+                        <div class="step-number">✓</div>
+                        <div class="step-content">
+                            <div class="step-title">Liveness Probe</div>
+                            <div class="step-desc">정상 동작 주기적 체크</div>
+                        </div>
+                    </div>
+                    <div class="flow-step" style="margin: 8px 0; padding: 12px 14px;">
+                        <div class="step-number">✓</div>
+                        <div class="step-content">
+                            <div class="step-title">Rolling Update</div>
+                            <div class="step-desc">무중단 배포 - 신규 Pod 시작 후 기존 Pod 종료</div>
+                        </div>
+                    </div>
+                    <div class="flow-step" style="margin: 8px 0; padding: 12px 14px;">
+                        <div class="step-number">⚠</div>
+                        <div class="step-content">
+                            <div class="step-title">자동 롤백</div>
+                            <div class="step-desc">배포 실패 감지 시 이전 버전 즉시 복구</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="stats-grid" style="margin: 16px 0;">
+                    <div class="stat-card" style="padding: 16px 12px;">
+                        <div class="stat-number" style="font-size: 32px;">0</div>
+                        <div class="stat-label">다운타임</div>
+                    </div>
+                    <div class="stat-card" style="padding: 16px 12px;">
+                        <div class="stat-number" style="font-size: 32px;">100%</div>
+                        <div class="stat-label">가용성</div>
+                    </div>
+                    <div class="stat-card" style="padding: 16px 12px;">
+                        <div class="stat-number" style="font-size: 28px;">자동</div>
+                        <div class="stat-label">롤백</div>
+                    </div>
+                    <div class="stat-card" style="padding: 16px 12px;">
+                        <div class="stat-number" style="font-size: 28px;">즉시</div>
+                        <div class="stat-label">복구</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 10: Version Management -->
+        <div class="slide">
+            <div class="slide-header">
+                <div class="slide-number">10 / 12</div>
+                <h2>버전 관리 & 추적</h2>
+            </div>
+            <div class="slide-content">
+                <h3>Git SHA 기반 버전 관리</h3>
+                <div class="code-block"><span class="comment"># Dockerfile - 빌드 시 Git 커밋 임베딩</span>
+<span class="keyword">ARG</span> GIT_COMMIT=unknown
+<span class="keyword">ENV</span> GIT_COMMIT=${GIT_COMMIT}
+
+<span class="comment"># GitHub Actions - 빌드 시 Git SHA 전달</span>
+docker build \
+  --build-arg GIT_COMMIT=<span class="string">${{ github.sha }}</span> \
+  -t ghcr.io/repo:name:<span class="string">${{ github.sha }}</span> .
+
+<span class="comment"># Django API - 버전 정보 엔드포인트</span>
+@api_view(['GET'])
+def version_info(request):
+    return Response({
+        'version': os.environ.get('GIT_COMMIT'),
+        'timestamp': datetime.now().isoformat()
+    })</div>
+                <div class="feature-grid" style="margin-top: 24px;">
+                    <div class="feature-card">
+                        <div class="feature-icon">🔍</div>
+                        <div class="feature-title">웹 UI에서 버전 확인</div>
+                        <div class="feature-desc">현재 배포된 Git 커밋 확인 가능</div>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🔗</div>
+                        <div class="feature-title">1:1 매핑</div>
+                        <div class="feature-desc">Docker 이미지 ↔ Git 커밋 완벽 추적</div>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">⏮️</div>
+                        <div class="feature-title">정확한 롤백</div>
+                        <div class="feature-desc">특정 커밋으로 정확하게 복구</div>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">📊</div>
+                        <div class="feature-title">배포 이력</div>
+                        <div class="feature-desc">Git 히스토리 = 배포 히스토리</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 11: Future Roadmap -->
+        <div class="slide">
+            <div class="slide-header">
+                <div class="slide-number">11 / 12</div>
+                <h2>발전 방향</h2>
+            </div>
+            <div class="slide-content">
+                <div class="timeline">
+                    <div class="timeline-item">
+                        <div class="timeline-dot"></div>
+                        <div class="timeline-title">단기 (1-3개월)</div>
+                        <div class="timeline-desc">
+                            • Prometheus + Grafana 모니터링<br>
+                            • EFK 스택 중앙화 로깅<br>
+                            • Sealed Secrets 보안 강화<br>
+                            • Slack/Discord 알림 통합
+                        </div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-dot"></div>
+                        <div class="timeline-title">중기 (3-6개월)</div>
+                        <div class="timeline-desc">
+                            • PostgreSQL 클러스터 고가용성<br>
+                            • Redis 캐싱 레이어<br>
+                            • HPA 자동 스케일링<br>
+                            • Canary/Blue-Green 배포
+                        </div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-dot"></div>
+                        <div class="timeline-title">장기 (6-12개월)</div>
+                        <div class="timeline-desc">
+                            • 멀티 클러스터 페더레이션<br>
+                            • AI/ML 기반 이상 탐지<br>
+                            • 멀티 테넌시 SaaS 전환<br>
+                            • 모바일 앱 개발
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 12: Conclusion -->
+        <div class="slide">
+            <div class="slide-header">
+                <div class="slide-number">12 / 12</div>
+                <h1>결론 & 핵심 성과</h1>
+            </div>
+            <div class="slide-content">
+                <div class="feature-grid" style="margin: 16px 0; gap: 14px;">
+                    <div class="feature-card" style="padding: 16px 20px;">
+                        <div class="feature-icon">✅</div>
+                        <div class="feature-title">완전 자동화</div>
+                        <div class="feature-desc">개발부터 배포까지 원클릭 처리</div>
+                    </div>
+                    <div class="feature-card" style="padding: 16px 20px;">
+                        <div class="feature-icon">✅</div>
+                        <div class="feature-title">GitOps 실현</div>
+                        <div class="feature-desc">선언적 추적 가능 배포</div>
+                    </div>
+                    <div class="feature-card" style="padding: 16px 20px;">
+                        <div class="feature-icon">✅</div>
+                        <div class="feature-title">무중단 배포</div>
+                        <div class="feature-desc">Rolling Update + 자동 롤백</div>
+                    </div>
+                    <div class="feature-card" style="padding: 16px 20px;">
+                        <div class="feature-icon">✅</div>
+                        <div class="feature-title">환경 분리</div>
+                        <div class="feature-desc">Dev/Prod 완전 독립 관리</div>
+                    </div>
+                </div>
+
+                <div class="contact" style="margin: 20px 0; padding: 20px 28px;">
+                    <h3 style="font-size: 20px; margin-bottom: 12px;">🚀 시작하기</h3>
+                    <p style="margin: 16px 0; font-size: 16px; font-weight: 500;">start.bat 하나로 모든 것을 경험하세요</p>
+                    <div style="display: flex; gap: 12px; justify-content: center; margin-top: 16px; font-size: 14px;">
+                        <div style="background: rgba(255,255,255,0.2); padding: 10px 20px; border-radius: 6px;">
+                            <strong>Dev Calendar:</strong> http://localhost:8081
+                        </div>
+                        <div style="background: rgba(255,255,255,0.2); padding: 10px 20px; border-radius: 6px;">
+                            <strong>ArgoCD:</strong> https://localhost:8080
+                        </div>
+                    </div>
+                </div>
+
+                <div style="text-align: center; margin-top: 20px; color: #64748b;">
+                    <p style="font-size: 16px;">감사합니다 🙏</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation -->
+        <div class="navigation">
+            <button class="nav-btn" id="prevBtn" onclick="changeSlide(-1)">이전</button>
+            <div class="dots" id="dotsContainer"></div>
+            <button class="nav-btn" id="nextBtn" onclick="changeSlide(1)">다음</button>
+        </div>
+    </div>
+
+    <script>
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+        const totalSlides = slides.length;
+
+        // Initialize dots
+        const dotsContainer = document.getElementById('dotsContainer');
+        for (let i = 0; i < totalSlides; i++) {
+            const dot = document.createElement('div');
+            dot.className = 'dot';
+            if (i === 0) dot.classList.add('active');
+            dot.onclick = () => goToSlide(i);
+            dotsContainer.appendChild(dot);
+        }
+
+        function showSlide(n) {
+            slides[currentSlide].classList.remove('active');
+            currentSlide = (n + totalSlides) % totalSlides;
+            slides[currentSlide].classList.add('active');
+
+            // Update dots
+            document.querySelectorAll('.dot').forEach((dot, index) => {
+                dot.classList.toggle('active', index === currentSlide);
+            });
+
+            // Update navigation buttons
+            document.getElementById('prevBtn').disabled = currentSlide === 0;
+            document.getElementById('nextBtn').disabled = currentSlide === totalSlides - 1;
+        }
+
+        function changeSlide(direction) {
+            showSlide(currentSlide + direction);
+        }
+
+        function goToSlide(index) {
+            showSlide(index);
+        }
+
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft') changeSlide(-1);
+            if (e.key === 'ArrowRight') changeSlide(1);
+        });
+
+        // Touch/swipe support
+        let touchStartX = 0;
+        let touchEndX = 0;
+
+        document.addEventListener('touchstart', (e) => {
+            touchStartX = e.changedTouches[0].screenX;
+        });
+
+        document.addEventListener('touchend', (e) => {
+            touchEndX = e.changedTouches[0].screenX;
+            handleSwipe();
+        });
+
+        function handleSwipe() {
+            if (touchEndX < touchStartX - 50) changeSlide(1);
+            if (touchEndX > touchStartX + 50) changeSlide(-1);
+        }
+
+        // Initialize
+        showSlide(0);
+    </script>
+</body>
+</html>

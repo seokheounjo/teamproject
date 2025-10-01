@@ -92,3 +92,11 @@ def calendar_view(request: Request, project_id: int, db: Session = Depends(get_d
 	project = db.query(Project).filter(Project.id == project_id).first()
 	tasks = db.query(Task).filter(Task.project_id == project_id).all()
 	return templates.TemplateResponse("calendar.html", {"request": request, "project": project, "tasks": tasks})
+
+@router.get("/{project_id}/settings")
+def project_settings(request: Request, project_id: int, db: Session = Depends(get_db)):
+	"""프로젝트 상세 설정 페이지"""
+	project = db.query(Project).filter(Project.id == project_id).first()
+	if not project:
+		return RedirectResponse(url="/projects")
+	return templates.TemplateResponse("project_settings.html", {"request": request, "project": project})

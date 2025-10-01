@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ project.name }} - 프로젝트 설정</title>
+    <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            background: white;
+            padding: 1.5rem 2rem;
+            border-radius: 16px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .back-btn:hover {
+            background: #5568d3;
+            transform: translateX(-5px);
+        }
+
+        .page-title {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: #333;
+        }
+
+        .settings-grid {
+            display: grid;
+            gap: 2rem;
+        }
+
+        .settings-card {
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .card-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .card-icon {
+            font-size: 1.75rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #555;
+        }
+
+        .form-input, .form-textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        .form-input:focus, .form-textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        .btn-primary {
+            padding: 0.75rem 2rem;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-add {
+            padding: 0.5rem 1rem;
+            background: #10b981;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-add:hover {
+            background: #059669;
+        }
+
+        .milestone-list, .sprint-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .milestone-item, .sprint-item {
+            display: grid;
+            grid-template-columns: 1fr 1fr auto;
+            gap: 1rem;
+            padding: 1rem;
+            background: #f9fafb;
+            border-radius: 8px;
+            align-items: center;
+        }
+
+        .btn-remove {
+            padding: 0.5rem 1rem;
+            background: #ef4444;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-remove:hover {
+            background: #dc2626;
+        }
+
+        .success-message {
+            display: none;
+            padding: 1rem;
+            background: #10b981;
+            color: white;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            animation: slideInDown 0.3s ease;
+        }
+
+        .success-message.show {
+            display: block;
+        }
+
+        @keyframes slideInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .info-box {
+            padding: 1rem;
+            background: #e0e7ff;
+            border-left: 4px solid #667eea;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+            color: #4338ca;
+        }
+
+        .date-input {
+            padding: 0.5rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div>
+                <a href="/projects/{{ project.id }}" class="back-btn">← 뒤로 가기</a>
+            </div>
+            <h1 class="page-title">⚙️ {{ project.name }} 설정</h1>
+        </div>
+
+        <div id="success-message" class="success-message">
+            ✅ 프로젝트 설정이 성공적으로 저장되었습니다!
+        </div>
+
+        <form id="settings-form" hx-post="/api/projects/{{ project.id }}/settings" hx-swap="none">
+            <div class="settings-grid">
+                <!-- 프로젝트 목표 -->
+                <div class="settings-card">
+                    <h2 class="card-title">
+                        <span class="card-icon">🎯</span>
+                        프로젝트 목표
+                    </h2>
+                    <div class="info-box">
+                        프로젝트의 주요 목표와 비전을 작성하세요. 팀원들이 공통의 목표를 향해 나아갈 수 있도록 명확하게 정의해주세요.
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">목표 설명</label>
+                        <textarea
+                            name="goals"
+                            class="form-textarea"
+                            placeholder="예: Q4까지 사용자 10만명 달성, 핵심 기능 5개 출시"
+                        >{{ project.goals or '' }}</textarea>
+                    </div>
+                </div>
+
+                <!-- 마일스톤 -->
+                <div class="settings-card">
+                    <h2 class="card-title">
+                        <span class="card-icon">🏔️</span>
+                        마일스톤
+                    </h2>
+                    <div class="info-box">
+                        프로젝트의 주요 이정표를 설정하세요. 큰 단위의 목표 달성 시점을 정의합니다.
+                    </div>
+                    <div id="milestones-container" class="milestone-list">
+                        {% if project.milestones %}
+                            {% for milestone in project.milestones %}
+                            <div class="milestone-item">
+                                <input type="text" class="form-input milestone-name" placeholder="마일스톤 이름" value="{{ milestone.name }}" />
+                                <input type="date" class="date-input milestone-date" value="{{ milestone.date }}" />
+                                <button type="button" class="btn-remove" onclick="this.parentElement.remove()">삭제</button>
+                            </div>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                    <button type="button" class="btn-add" onclick="addMilestone()">+ 마일스톤 추가</button>
+                </div>
+
+                <!-- 스프린트 -->
+                <div class="settings-card">
+                    <h2 class="card-title">
+                        <span class="card-icon">🏃</span>
+                        스프린트 계획
+                    </h2>
+                    <div class="info-box">
+                        짧은 주기의 개발 스프린트를 계획하세요. 일반적으로 1-2주 단위로 설정합니다.
+                    </div>
+                    <div id="sprints-container" class="sprint-list">
+                        {% if project.sprints %}
+                            {% for sprint in project.sprints %}
+                            <div class="sprint-item">
+                                <input type="text" class="form-input sprint-name" placeholder="스프린트 이름" value="{{ sprint.name }}" />
+                                <input type="date" class="date-input sprint-date" value="{{ sprint.end_date }}" />
+                                <button type="button" class="btn-remove" onclick="this.parentElement.remove()">삭제</button>
+                            </div>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                    <button type="button" class="btn-add" onclick="addSprint()">+ 스프린트 추가</button>
+                </div>
+
+                <!-- 저장 버튼 -->
+                <div class="settings-card" style="text-align: center;">
+                    <button type="submit" class="btn-primary">💾 설정 저장</button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        function addMilestone() {
+            const container = document.getElementById('milestones-container');
+            const item = document.createElement('div');
+            item.className = 'milestone-item';
+            item.innerHTML = `
+                <input type="text" class="form-input milestone-name" placeholder="마일스톤 이름" />
+                <input type="date" class="date-input milestone-date" />
+                <button type="button" class="btn-remove" onclick="this.parentElement.remove()">삭제</button>
+            `;
+            container.appendChild(item);
+        }
+
+        function addSprint() {
+            const container = document.getElementById('sprints-container');
+            const item = document.createElement('div');
+            item.className = 'sprint-item';
+            item.innerHTML = `
+                <input type="text" class="form-input sprint-name" placeholder="스프린트 이름" />
+                <input type="date" class="date-input sprint-date" />
+                <button type="button" class="btn-remove" onclick="this.parentElement.remove()">삭제</button>
+            `;
+            container.appendChild(item);
+        }
+
+        // Form 제출 처리
+        document.getElementById('settings-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            // 마일스톤 데이터 수집
+            const milestones = [];
+            document.querySelectorAll('.milestone-item').forEach(item => {
+                const name = item.querySelector('.milestone-name').value;
+                const date = item.querySelector('.milestone-date').value;
+                if (name && date) {
+                    milestones.push({ name, date });
+                }
+            });
+
+            // 스프린트 데이터 수집
+            const sprints = [];
+            document.querySelectorAll('.sprint-item').forEach(item => {
+                const name = item.querySelector('.sprint-name').value;
+                const end_date = item.querySelector('.sprint-date').value;
+                if (name && end_date) {
+                    sprints.push({ name, end_date });
+                }
+            });
+
+            // FormData 생성
+            const formData = new FormData();
+            formData.append('goals', document.querySelector('textarea[name="goals"]').value);
+            formData.append('milestones', JSON.stringify(milestones));
+            formData.append('sprints', JSON.stringify(sprints));
+
+            // API 전송
+            try {
+                const response = await fetch('/api/projects/{{ project.id }}/settings', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    const successMsg = document.getElementById('success-message');
+                    successMsg.classList.add('show');
+                    setTimeout(() => {
+                        successMsg.classList.remove('show');
+                    }, 3000);
+
+                    // 페이지 스크롤 최상단으로
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('설정 저장 중 오류가 발생했습니다.');
+            }
+        });
+    </script>
+</body>
+</html>
