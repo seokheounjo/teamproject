@@ -1,11 +1,447 @@
-<div>
-  <h3>캘린더 (작업 마감일)</h3>
-  <ul>
-    {% for t in tasks if t.due_date %}
-      <li>{{ t.due_date }} - [{{ t.status }}] {{ t.title }}</li>
-    {% endfor %}
-  </ul>
-  <p>
-    ICS 구독: <code>/calendar/{{project.id}}.ics?token=YOUR_TOKEN</code>
-  </p>
-</div>
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ project.name }} - 프로젝트 캘린더</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            background: white;
+            padding: 1.5rem 2rem;
+            border-radius: 16px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .back-btn:hover {
+            background: #5568d3;
+            transform: translateX(-5px);
+        }
+
+        .page-title {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: #333;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            color: #666;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #667eea;
+        }
+
+        .stat-sub {
+            font-size: 0.875rem;
+            color: #999;
+            margin-top: 0.25rem;
+        }
+
+        .timeline-section {
+            background: white;
+            padding: 2rem;
+            border-radius: 16px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .gantt-chart {
+            position: relative;
+            padding: 2rem 0;
+        }
+
+        .gantt-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+            padding: 0 1rem;
+            font-size: 0.875rem;
+            color: #666;
+        }
+
+        .gantt-row {
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .gantt-label {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .gantt-bar-container {
+            position: relative;
+            height: 40px;
+            background: #f3f4f6;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .gantt-bar {
+            position: absolute;
+            height: 100%;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            padding: 0 1rem;
+            color: white;
+            font-size: 0.875rem;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .gantt-bar:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+
+        .gantt-bar.milestone {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        }
+
+        .gantt-bar.sprint {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        }
+
+        .gantt-today {
+            position: absolute;
+            width: 2px;
+            height: 100%;
+            background: #ef4444;
+            z-index: 10;
+        }
+
+        .gantt-today-label {
+            position: absolute;
+            top: -20px;
+            transform: translateX(-50%);
+            background: #ef4444;
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .progress-info {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-left: auto;
+        }
+
+        .progress-bar {
+            width: 100px;
+            height: 8px;
+            background: #e5e7eb;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            transition: width 0.3s;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .badge.active {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .badge.completed {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .badge.upcoming {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: #999;
+        }
+
+        .empty-state-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+
+        @media (max-width: 1024px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 640px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div>
+                <a href="/projects/{{ project.id }}" class="back-btn">← 프로젝트 홈</a>
+            </div>
+            <h1 class="page-title">📅 {{ project.name }} 캘린더</h1>
+        </div>
+
+        <!-- 통계 카드 -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">전체 작업</div>
+                <div class="stat-value" id="total-tasks">-</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">완료된 작업</div>
+                <div class="stat-value" id="completed-tasks">-</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">진행률</div>
+                <div class="stat-value" id="progress-percent">-</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">남은 기한</div>
+                <div class="stat-value" id="days-remaining">-</div>
+                <div class="stat-sub" id="deadline-text">프로젝트 종료일 기준</div>
+            </div>
+        </div>
+
+        <!-- 타임라인 섹션 -->
+        <div class="timeline-section">
+            <h2 class="section-title">
+                <span>🗓️</span>
+                프로젝트 타임라인
+            </h2>
+
+            <div class="gantt-chart" id="gantt-chart">
+                <!-- JavaScript로 동적 생성 -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 프로젝트 데이터
+        const project = {
+            id: {{ project.id }},
+            name: "{{ project.name }}",
+            milestones: {{ project.milestones | tojson | safe if project.milestones else '[]' }},
+            sprints: {{ project.sprints | tojson | safe if project.sprints else '[]' }},
+            started_at: "{{ project.started_at.isoformat() if project.started_at else '' }}",
+            completed_at: "{{ project.completed_at.isoformat() if project.completed_at else '' }}"
+        };
+
+        // 진행률 데이터 로드
+        async function loadProgress() {
+            try {
+                const response = await fetch(`/api/projects/${project.id}/progress`);
+                const data = await response.json();
+
+                document.getElementById('total-tasks').textContent = data.total_tasks;
+                document.getElementById('completed-tasks').textContent = data.completed_tasks;
+                document.getElementById('progress-percent').textContent = data.progress + '%';
+            } catch (error) {
+                console.error('Progress load error:', error);
+            }
+        }
+
+        // 날짜 계산
+        function calculateDateRange(items) {
+            const dates = [];
+            items.forEach(item => {
+                if (item.start_date) dates.push(new Date(item.start_date));
+                if (item.end_date) dates.push(new Date(item.end_date));
+            });
+
+            if (dates.length === 0) return null;
+
+            const minDate = new Date(Math.min(...dates));
+            const maxDate = new Date(Math.max(...dates));
+
+            return { minDate, maxDate };
+        }
+
+        // 남은 기한 계산
+        function calculateDaysRemaining() {
+            const allItems = [...project.milestones, ...project.sprints];
+            const range = calculateDateRange(allItems);
+
+            if (!range) {
+                document.getElementById('days-remaining').textContent = '-';
+                document.getElementById('deadline-text').textContent = '설정된 기한 없음';
+                return;
+            }
+
+            const today = new Date();
+            const daysLeft = Math.ceil((range.maxDate - today) / (1000 * 60 * 60 * 24));
+
+            if (daysLeft < 0) {
+                document.getElementById('days-remaining').textContent = '종료';
+                document.getElementById('days-remaining').style.color = '#ef4444';
+                document.getElementById('deadline-text').textContent = '프로젝트 완료됨';
+            } else {
+                document.getElementById('days-remaining').textContent = daysLeft + '일';
+                document.getElementById('deadline-text').textContent = range.maxDate.toLocaleDateString('ko-KR');
+            }
+        }
+
+        // Gantt 차트 렌더링
+        function renderGanttChart() {
+            const container = document.getElementById('gantt-chart');
+            const allItems = [
+                ...project.milestones.map(m => ({ ...m, type: 'milestone' })),
+                ...project.sprints.map(s => ({ ...s, type: 'sprint' }))
+            ];
+
+            if (allItems.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📋</div>
+                        <p>마일스톤이나 스프린트를 설정해주세요.</p>
+                        <p style="margin-top: 0.5rem;">
+                            <a href="/projects/${project.id}/settings" style="color: #667eea;">설정 페이지로 이동 →</a>
+                        </p>
+                    </div>
+                `;
+                return;
+            }
+
+            const range = calculateDateRange(allItems);
+            if (!range) return;
+
+            const totalDays = Math.ceil((range.maxDate - range.minDate) / (1000 * 60 * 60 * 24));
+            const today = new Date();
+            const todayPosition = ((today - range.minDate) / (range.maxDate - range.minDate)) * 100;
+
+            let html = `
+                <div class="gantt-header">
+                    <span>${range.minDate.toLocaleDateString('ko-KR')}</span>
+                    <span>${range.maxDate.toLocaleDateString('ko-KR')}</span>
+                </div>
+            `;
+
+            // Today 마커
+            if (todayPosition >= 0 && todayPosition <= 100) {
+                html += `
+                    <div class="gantt-today" style="left: ${todayPosition}%">
+                        <div class="gantt-today-label">오늘</div>
+                    </div>
+                `;
+            }
+
+            allItems.forEach(item => {
+                const start = new Date(item.start_date || item.end_date);
+                const end = new Date(item.end_date);
+                const startPos = ((start - range.minDate) / (range.maxDate - range.minDate)) * 100;
+                const width = ((end - start) / (range.maxDate - range.minDate)) * 100 || 5;
+
+                const status = end < today ? 'completed' : start <= today && end >= today ? 'active' : 'upcoming';
+                const icon = item.type === 'milestone' ? '🏔️' : '🏃';
+
+                html += `
+                    <div class="gantt-row">
+                        <div class="gantt-label">
+                            <span>${icon}</span>
+                            <span>${item.name}</span>
+                            <span class="badge ${status}">
+                                ${status === 'active' ? '진행중' : status === 'completed' ? '완료' : '예정'}
+                            </span>
+                        </div>
+                        <div class="gantt-bar-container">
+                            <div class="gantt-bar ${item.type}" style="left: ${startPos}%; width: ${Math.max(width, 5)}%">
+                                ${start.toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' })} -
+                                ${end.toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' })}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        // 초기화
+        loadProgress();
+        calculateDaysRemaining();
+        renderGanttChart();
+    </script>
+</body>
+</html>

@@ -155,7 +155,7 @@
 
         .milestone-item, .sprint-item {
             display: grid;
-            grid-template-columns: 1fr 1fr auto;
+            grid-template-columns: 2fr 1fr 1fr auto;
             gap: 1rem;
             padding: 1rem;
             background: #f9fafb;
@@ -269,7 +269,8 @@
                             {% for milestone in project.milestones %}
                             <div class="milestone-item">
                                 <input type="text" class="form-input milestone-name" placeholder="마일스톤 이름" value="{{ milestone.name }}" />
-                                <input type="date" class="date-input milestone-date" value="{{ milestone.date }}" />
+                                <input type="date" class="date-input milestone-start-date" placeholder="시작일" value="{{ milestone.start_date or '' }}" />
+                                <input type="date" class="date-input milestone-end-date" placeholder="종료일" value="{{ milestone.end_date or milestone.date or '' }}" />
                                 <button type="button" class="btn-remove" onclick="this.parentElement.remove()">삭제</button>
                             </div>
                             {% endfor %}
@@ -292,7 +293,8 @@
                             {% for sprint in project.sprints %}
                             <div class="sprint-item">
                                 <input type="text" class="form-input sprint-name" placeholder="스프린트 이름" value="{{ sprint.name }}" />
-                                <input type="date" class="date-input sprint-date" value="{{ sprint.end_date }}" />
+                                <input type="date" class="date-input sprint-start-date" placeholder="시작일" value="{{ sprint.start_date or '' }}" />
+                                <input type="date" class="date-input sprint-end-date" placeholder="종료일" value="{{ sprint.end_date or '' }}" />
                                 <button type="button" class="btn-remove" onclick="this.parentElement.remove()">삭제</button>
                             </div>
                             {% endfor %}
@@ -316,7 +318,8 @@
             item.className = 'milestone-item';
             item.innerHTML = `
                 <input type="text" class="form-input milestone-name" placeholder="마일스톤 이름" />
-                <input type="date" class="date-input milestone-date" />
+                <input type="date" class="date-input milestone-start-date" placeholder="시작일" />
+                <input type="date" class="date-input milestone-end-date" placeholder="종료일" />
                 <button type="button" class="btn-remove" onclick="this.parentElement.remove()">삭제</button>
             `;
             container.appendChild(item);
@@ -328,7 +331,8 @@
             item.className = 'sprint-item';
             item.innerHTML = `
                 <input type="text" class="form-input sprint-name" placeholder="스프린트 이름" />
-                <input type="date" class="date-input sprint-date" />
+                <input type="date" class="date-input sprint-start-date" placeholder="시작일" />
+                <input type="date" class="date-input sprint-end-date" placeholder="종료일" />
                 <button type="button" class="btn-remove" onclick="this.parentElement.remove()">삭제</button>
             `;
             container.appendChild(item);
@@ -342,9 +346,10 @@
             const milestones = [];
             document.querySelectorAll('.milestone-item').forEach(item => {
                 const name = item.querySelector('.milestone-name').value;
-                const date = item.querySelector('.milestone-date').value;
-                if (name && date) {
-                    milestones.push({ name, date });
+                const start_date = item.querySelector('.milestone-start-date').value;
+                const end_date = item.querySelector('.milestone-end-date').value;
+                if (name && end_date) {
+                    milestones.push({ name, start_date, end_date });
                 }
             });
 
@@ -352,9 +357,10 @@
             const sprints = [];
             document.querySelectorAll('.sprint-item').forEach(item => {
                 const name = item.querySelector('.sprint-name').value;
-                const end_date = item.querySelector('.sprint-date').value;
+                const start_date = item.querySelector('.sprint-start-date').value;
+                const end_date = item.querySelector('.sprint-end-date').value;
                 if (name && end_date) {
-                    sprints.push({ name, end_date });
+                    sprints.push({ name, start_date, end_date });
                 }
             });
 

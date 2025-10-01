@@ -128,3 +128,25 @@ def update_project_settings(
     db.commit()
     db.refresh(project)
     return {"success": True, "project_id": project_id}
+
+@router.get("/{project_id}/progress")
+def get_project_progress(project_id: int, db: Session = Depends(get_db)):
+    """프로젝트 진행률 계산"""
+    from app.models.task import Task
+
+    project = db.query(Project).filter(Project.id == project_id).first()
+    if not project:
+        return {"error": "Project not found"}
+
+    tasks = db.query(Task).filter(Task.project_id == project_id).all()
+    total_tasks = len(tasks)
+    completed_tasks = len([t for t in tasks if t.status == "Done"])
+
+    progress = round((completed_tasks / total_tasks * 100) if total_tasks > 0 else 0, 1)
+
+    return {
+        "project_id": project_id,
+        "total_tasks": total_tasks,
+        "completed_tasks": completed_tasks,
+        "progress": progress
+    }
